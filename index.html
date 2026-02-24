@@ -12,6 +12,7 @@
 <meta name="theme-color" content="#0d0d16">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <style>
 :root {
   --bg:#0d0d16; --bg2:#111120; --card:#16162a; --card2:#1e1e36;
@@ -138,6 +139,8 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
 .eo{width:32px;height:32px;background:var(--bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;}
 .eo:hover,.eo.sel{border-color:var(--accent);background:var(--card2);}
 
+.sortable-ghost{opacity:.35;background:var(--card2)!important;}
+.sortable-drag{opacity:.9;box-shadow:0 8px 24px rgba(0,0,0,.4);}
 /* ===== RITUALS ===== */
 .ritual-section-hdr{display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px;}
 .ritual-hdr-title{font-size:0.72rem;font-weight:700;color:#a855f7;text-transform:uppercase;letter-spacing:.12em;}
@@ -924,6 +927,7 @@ function renderQuests(){
     const isDone=!!h.completions[t], streak=getStreak(h);
     const el=document.createElement('div');
     el.className='habit-card'+(isDone?' done':'');
+    el.dataset.id=h.id;
     el.onclick=()=>toggleHabit(h.id);
     const streakBonus=streak>=7?Math.floor(streak/7)*10:0;
     const streakMultiplier=(S.dailyBuff&&S.dailyBuff.id==='streak_fire')?2:1;
@@ -948,6 +952,7 @@ function renderQuests(){
     const isDone=!!r.completions[t];
     const el=document.createElement('div');
     el.className='ritual-card'+(isDone?' done':'');
+    el.dataset.id=r.id;
     el.onclick=()=>completeRitual(r.id);
     el.innerHTML=`
       <button class="ritual-del" onclick="event.stopPropagation();deleteRitual('${r.id}')" title="Remove ritual">✕</button>
@@ -963,6 +968,31 @@ function renderQuests(){
       <div class="ritual-check">${isDone?'✦':''}</div>`;
     ritList.appendChild(el);
   });
+
+  // Drag-to-reorder: quests
+  if(window.Sortable){
+    if(window._habitSortable) window._habitSortable.destroy();
+    window._habitSortable=Sortable.create(list,{
+      animation:150, delay:300, delayOnTouchOnly:true,
+      ghostClass:'sortable-ghost', dragClass:'sortable-drag',
+      onEnd(){
+        const ids=[...list.querySelectorAll('.habit-card')].map(el=>el.dataset.id);
+        S.habits.sort((a,b)=>ids.indexOf(a.id)-ids.indexOf(b.id));
+        save();
+      }
+    });
+    // Drag-to-reorder: rituals
+    if(window._ritualSortable) window._ritualSortable.destroy();
+    window._ritualSortable=Sortable.create(ritList,{
+      animation:150, delay:300, delayOnTouchOnly:true,
+      ghostClass:'sortable-ghost', dragClass:'sortable-drag',
+      onEnd(){
+        const ids=[...ritList.querySelectorAll('.ritual-card')].map(el=>el.dataset.id);
+        S.rituals.sort((a,b)=>ids.indexOf(a.id)-ids.indexOf(b.id));
+        save();
+      }
+    });
+  }
 }
 
 function renderCharacter(){
@@ -1583,12 +1613,39 @@ function renderPets(){
 
 // ═══════════════════════ UI HELPERS ══════════════════════════════════
 
+const _tabOrder=['quests','character','pets','shop','raids','upgrades'];
+let _curTabIdx=0;
+
 function goTab(id,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  btn.classList.add('active');
+  if(btn) btn.classList.add('active');
+  _curTabIdx=_tabOrder.indexOf(id);
 }
+
+function _goTabByIdx(i){
+  i=Math.max(0,Math.min(_tabOrder.length-1,i));
+  const id=_tabOrder[i];
+  const btn=document.querySelector(`.tab[onclick*="'${id}'"]`);
+  goTab(id,btn);
+}
+
+// Swipe left/right to switch tabs
+(function(){
+  let sx=0, sy=0;
+  document.addEventListener('touchstart',e=>{
+    sx=e.touches[0].clientX;
+    sy=e.touches[0].clientY;
+  },{passive:true});
+  document.addEventListener('touchend',e=>{
+    const dx=e.changedTouches[0].clientX-sx;
+    const dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5){
+      _goTabByIdx(dx<0?_curTabIdx+1:_curTabIdx-1);
+    }
+  },{passive:true});
+})();
 
 function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
 
