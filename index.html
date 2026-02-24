@@ -318,6 +318,14 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
     <div style="font-size:.8rem;color:var(--muted)">Upgrade your gold/hour. Complete 3 habits daily to claim.</div>
   </div>
   <div class="upg-list" id="upgGrid"></div>
+  <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px">
+    <div style="font-weight:700;font-size:1rem;margin-bottom:3px">💾 Save Data</div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px">Back up your progress or restore from a previous save.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="exportSave()">⬇️ Download Save</button>
+      <label class="btn btn-ghost" style="cursor:pointer">⬆️ Import Save<input type="file" accept=".json" style="display:none" onchange="importSave(event)"></label>
+    </div>
+  </div>
 </div>
 
 <!-- ITEM MODAL -->
@@ -416,7 +424,7 @@ const UPGRADES = [
   {id:'tavern', icon:'🍺',name:'Open a Tavern',  desc:'+20 gold/hr',   gph:20, max:3,cost:4000,  mult:3.5},
   {id:'guild',  icon:'🏛️',name:'Found a Guild',  desc:'+50 gold/hr',   gph:50, max:3,cost:20000, mult:4.0},
   {id:'kingdom',icon:'👑',name:'Rule a Kingdom', desc:'+120 gold/hr',  gph:120,max:2,cost:100000,mult:4.5},
-  {id:'vault',  icon:'🏦',name:'Gold Vault',      desc:'+24hr gold cap',gph:0,  max:3,cost:300,   mult:3.5,special:'cap'},
+  {id:'vault',  icon:'🏦',name:'Gold Vault',      desc:'+24hr cap',gph:0,  max:3,cost:300,   mult:3.5,special:'cap'},
 ];
 
 const RAIDS = [
@@ -530,7 +538,7 @@ function getGph(){
 }
 
 function getCap(){
-  let c=24;
+  let c=48;
   const vl=S.upgrades['vault']||0;
   c+=vl*24;
   return c;
@@ -1061,6 +1069,32 @@ function showItem(item,fromSlot){
     ? `<button class="btn btn-ghost" onclick="unequipItem('${item.slot}')">Unequip</button><button class="btn btn-ghost" onclick="closeOverlay('itemOverlay')">Close</button>`
     : `<button class="btn btn-p" onclick="equipItem('${item.id}')">Equip</button><button class="btn btn-ghost" onclick="closeOverlay('itemOverlay')">Close</button>`;
   document.getElementById('itemOverlay').classList.add('show');
+}
+
+function exportSave(){
+  const data=localStorage.getItem(KEY)||'{}';
+  const blob=new Blob([data],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='habitforge-save.json';
+  a.click();
+  toast('💾 Save downloaded!','tx');
+}
+function importSave(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!data.totalXP===undefined||!data.habits) throw new Error('Invalid save');
+      localStorage.setItem(KEY,ev.target.result);
+      toast('✅ Save restored! Reloading...','tx');
+      setTimeout(()=>location.reload(),1200);
+    } catch(err){
+      toast('❌ Invalid save file','');
+    }
+  };
+  reader.readAsText(file);
 }
 
 function buyUpgrade(id){
