@@ -62,6 +62,50 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
 .bc{border-color:var(--common)!important}.bu{border-color:var(--uncommon)!important}.br{border-color:var(--rare)!important}.be{border-color:var(--epic)!important}.bl{border-color:var(--legendary)!important}
 .bgc{background:rgba(157,157,157,.12)!important}.bgu{background:rgba(30,255,0,.08)!important}.bgr{background:rgba(0,112,221,.12)!important}.bge{background:rgba(163,53,238,.12)!important}.bgl{background:rgba(255,128,0,.12)!important}
 
+/* DAILY BUFF CARD */
+.daily-buff-card{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;background:var(--card);border-left:4px solid;margin-bottom:14px;border-bottom:1px solid var(--border);}
+.daily-buff-icon{font-size:1.8rem;}
+.daily-buff-info{flex:1;}
+.daily-buff-name{font-weight:700;font-size:0.9rem;margin-bottom:2px;}
+.daily-buff-desc{font-size:0.78rem;color:var(--muted);}
+
+/* PET CARD */
+.pet-card{background:linear-gradient(135deg,#0d0620 0%,#130826 100%);border:1px solid #4a1d6e;border-radius:12px;padding:16px;margin-bottom:14px;text-align:center;position:relative;overflow:hidden;}
+.pet-card::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at top left,rgba(168,85,247,.07),transparent 60%);pointer-events:none;}
+.pet-emoji{font-size:3rem;margin-bottom:10px;}
+.pet-name{font-weight:700;font-size:0.9rem;color:var(--accent2);margin-bottom:2px;}
+.pet-desc{font-size:0.78rem;color:#8b5cf6;margin-bottom:12px;}
+.pet-progress{background:var(--bg);border-radius:6px;height:8px;margin-bottom:10px;overflow:hidden;border:1px solid #4a1d6e;}
+.pet-progress-fill{height:100%;background:linear-gradient(90deg,#a855f7,#7c3aed);transition:width .4s ease;}
+.pet-bonus{font-size:0.78rem;color:#a855f7;font-weight:600;}
+
+/* PETS PAGE */
+.pet-owned-card{background:linear-gradient(135deg,#0d0620 0%,#130826 100%);border:1px solid #4a1d6e;border-radius:12px;padding:14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px;}
+.pet-owned-emoji{font-size:2.5rem;flex-shrink:0;}
+.pet-owned-info{flex:1;}
+.pet-owned-name{font-weight:700;font-size:.92rem;color:var(--accent2);margin-bottom:4px;}
+.pet-owned-desc{font-size:.78rem;color:#8b5cf6;margin-bottom:8px;}
+.pet-owned-bonus{font-size:.78rem;color:#a855f7;font-weight:600;margin-top:6px;}
+.pet-available{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.pet-available-icon{font-size:2rem;width:48px;text-align:center;flex-shrink:0;}
+.pet-available-info{flex:1;}
+.pet-available-name{font-weight:700;font-size:.92rem;}
+.pet-available-bonus{font-size:.75rem;color:var(--muted);margin-top:2px;}
+.pet-available-cost{font-size:.85rem;color:var(--gold);font-weight:600;margin:0 8px;}
+
+/* ACHIEVEMENTS */
+.achievements-section{margin-top:16px;}
+.achievements-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;}
+.achievement-badge{background:linear-gradient(135deg,#0d0620 0%,#130826 100%);border:1px solid #4a1d6e;border-radius:10px;padding:10px;text-align:center;transition:all .2s;}
+.achievement-badge:hover{border-color:#a855f7;box-shadow:0 0 12px rgba(168,85,247,.15);}
+.achievement-icon{font-size:1.4rem;margin-bottom:4px;}
+.achievement-name{font-size:0.7rem;font-weight:700;color:#a855f7;}
+
+/* LOOT HISTORY */
+.loot-history-section{margin-top:16px;}
+.loot-entry{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;background:var(--bg);border:1px solid var(--border);margin-bottom:6px;font-size:0.78rem;}
+.loot-entry-item{font-size:1.1rem;flex-shrink:0;}
+
 /* ===== QUESTS TAB ===== */
 .quota-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;background:var(--card);border:1px solid var(--border);margin-bottom:14px;}
 .quota-dots{display:flex;gap:5px;}
@@ -77,7 +121,7 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
 .h-icon{width:40px;height:40px;background:var(--bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
 .h-info{flex:1;}
 .h-name{font-weight:600;font-size:0.92rem;}
-.h-meta{display:flex;gap:8px;font-size:0.75rem;color:var(--muted);margin-top:2px;}
+.h-meta{display:flex;gap:8px;font-size:0.75rem;color:var(--muted);margin-top:2px;flex-wrap:wrap;}
 .h-xpb{color:var(--accent2);}
 .h-streak{color:var(--gold);}
 .h-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-size:.85rem;}
@@ -193,7 +237,7 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
 .tg{border-color:var(--gold);}.tx{border-color:var(--accent);}.tl{border-color:var(--legendary);}
 
 /* Responsive */
-@media(max-width:520px){.char-layout{grid-template-columns:1fr;}.shop-grid{grid-template-columns:1fr;}.chests-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:520px){.char-layout{grid-template-columns:1fr;}.shop-grid{grid-template-columns:1fr;}.chests-grid{grid-template-columns:repeat(3,1fr);}.achievements-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -220,13 +264,15 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
 <nav class="tabs">
   <button class="tab active" onclick="goTab('quests',this)">⚔️ Quests</button>
   <button class="tab" onclick="goTab('character',this)">🛡️ Character</button>
+  <button class="tab" onclick="goTab('pets',this)">🐾 Pets</button>
   <button class="tab" onclick="goTab('shop',this)">🏪 Shop</button>
   <button class="tab" onclick="goTab('raids',this)">⚡ Raids</button>
-  <button class="tab" onclick="goTab('upgrades',this)">⚙️ Upgrades</button>
+  <button class="tab" onclick="goTab('upgrades',this)">🏰 Conquest</button>
 </nav>
 
 <!-- QUESTS PAGE -->
 <div class="page active" id="page-quests">
+  <div id="dailyBuffCard"></div>
   <div class="quota-bar">
     <div class="quota-dots" id="qdots"></div>
     <div style="flex:1;font-size:.83rem" id="quotaText"></div>
@@ -235,9 +281,9 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
   <button class="add-btn" onclick="toggleAddForm()">+ Add new quest</button>
   <div class="add-form card" id="addForm">
     <div style="font-weight:600;margin-bottom:10px">New Quest</div>
-    <div class="emoji-row" id="ePicker"></div>
+    <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">Start with an emoji to set the icon: <span style="color:var(--text)">💧 Drink 1 litre of water</span></div>
     <div style="display:flex;gap:8px;margin-bottom:9px;flex-wrap:wrap">
-      <input class="form-input" id="hName" placeholder="Quest name…" style="flex:1;min-width:120px"/>
+      <input class="form-input" id="hName" placeholder="💧 Drink 1 litre of water" style="flex:1;min-width:120px"/>
       <input class="form-input" id="hXP" type="number" value="20" min="5" max="100" style="width:90px"/>
     </div>
     <div style="display:flex;gap:8px">
@@ -253,8 +299,8 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
   <button class="add-ritual-btn" onclick="toggleRitualForm()">✦ Add new ritual</button>
   <div class="add-form ritual-form card" id="ritualForm">
     <div style="font-weight:600;margin-bottom:10px;color:#a855f7">✦ Bind a New Ritual</div>
-    <div class="emoji-row" id="ritualEPicker"></div>
-    <input class="form-input" id="ritualName" placeholder="Ritual name…" style="width:100%;margin-bottom:9px;box-sizing:border-box"/>
+    <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">Start with an emoji to set the icon: <span style="color:var(--text)">🕯️ Evening meditation</span></div>
+    <input class="form-input" id="ritualName" placeholder="🕯️ Evening meditation" style="width:100%;margin-bottom:9px;box-sizing:border-box"/>
     <div style="display:flex;gap:8px">
       <button class="btn btn-p" onclick="addRitual()" style="background:#7c3aed">Bind Ritual</button>
       <button class="btn btn-ghost" onclick="toggleRitualForm()">Cancel</button>
@@ -264,6 +310,7 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
 
 <!-- CHARACTER PAGE -->
 <div class="page" id="page-character">
+  <div id="petCardContainer"></div>
   <div class="char-layout">
     <div>
       <div class="equip-panel">
@@ -281,6 +328,14 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
         <div class="sec" style="margin-bottom:8px">Character Stats</div>
         <div id="charStats"></div>
       </div>
+      <div class="stats-panel" style="margin-top:12px">
+        <div class="sec" style="margin-bottom:10px">💾 Save Data</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="exportSave()">⬇️ Download Save</button>
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer">⬆️ Import Save<input type="file" accept=".json" style="display:none" onchange="importSave(event)"></label>
+        </div>
+      </div>
+      <div id="achievementsContainer"></div>
     </div>
   </div>
 </div>
@@ -309,23 +364,21 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
     <div id="raidHist"></div>
     <div id="raidHistEmpty" style="color:var(--muted);font-size:.83rem;padding:8px 0">No raids completed yet.</div>
   </div>
+  <div id="lootHistorySection"></div>
+</div>
+
+<!-- PETS PAGE -->
+<div class="page" id="page-pets">
+  <div id="petsPage"></div>
 </div>
 
 <!-- UPGRADES PAGE -->
 <div class="page" id="page-upgrades">
   <div style="margin-bottom:14px">
-    <div style="font-weight:700;font-size:1rem;margin-bottom:3px">⚙️ Passive Income</div>
-    <div style="font-size:.8rem;color:var(--muted)">Upgrade your gold/hour. Complete 3 habits daily to claim.</div>
+    <div style="font-weight:700;font-size:1rem;margin-bottom:3px">🏰 Your Empire</div>
+    <div style="font-size:.8rem;color:var(--muted)" id="conquestSubtitle">Upgrade your gold/hour. Complete your daily quota to claim.</div>
   </div>
   <div class="upg-list" id="upgGrid"></div>
-  <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px">
-    <div style="font-weight:700;font-size:1rem;margin-bottom:3px">💾 Save Data</div>
-    <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px">Back up your progress or restore from a previous save.</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-ghost" onclick="exportSave()">⬇️ Download Save</button>
-      <label class="btn btn-ghost" style="cursor:pointer">⬆️ Import Save<input type="file" accept=".json" style="display:none" onchange="importSave(event)"></label>
-    </div>
-  </div>
 </div>
 
 <!-- ITEM MODAL -->
@@ -411,6 +464,8 @@ const SFXPOOL = ['','','','of Focus','of Endurance','of Power','of the Berserker
 
 const LEVEL_TITLES = ['Peasant','Farmer','Villager','Squire','Scout','Soldier','Guard','Archer','Mage','Knight','Hero','Champion','Ranger','Rogue','Paladin','Warlord','Archmage','Shadowblade','Dragonknight','Legend'];
 
+const PET_COSTS = {crystoad:100, ironpup:5000, moonowl:25000, emberfox:100000};
+
 const LEVELS = Array.from({length:20},(_,i)=>({
   level:i+1, title:LEVEL_TITLES[i]||'Legend',
   xpReq:Math.floor(100*Math.pow(1.35,i))
@@ -445,6 +500,82 @@ const RAIDS = [
 const EMOJIS = ['🏃','💪','📚','🧘','💧','🥗','😴','🎸','✏️','🧹','🏋️','🚴','🎯','🌿','🧠','💊','🎮','🧽','🐕','🎨','🏊','🍎'];
 const RITUAL_EMOJIS = ['🕯️','🌙','🔮','📿','🌑','⭐','⚗️','🌿','🪄','🗡️','📖','🌒','🩸','🪬','🌚','☽','🦇','🌫️','💀','🕰️','🌀','🔯'];
 
+const DAILY_BUFFS = [
+  {id:'xp_boost',   icon:'⚡', name:'Surge of Insight',     desc:'+50% XP from all quests',        color:'#a855f7'},
+  {id:'gold_boost',  icon:'💰', name:'Golden Hour',           desc:'+50% passive gold rate',         color:'#f59e0b'},
+  {id:'lucky_drops', icon:'🍀', name:'Fortune Smiles',       desc:'+25% ritual loot chance',        color:'#10b981'},
+  {id:'rarity_up',   icon:'💎', name:'The Stars Align',      desc:'Ritual loot shifts up one tier',  color:'#0070dd'},
+  {id:'streak_fire', icon:'🔥', name:'Burning Drive',        desc:'Streak XP bonuses doubled',      color:'#ef4444'},
+  {id:'cap_boost',   icon:'🏦', name:'Overflow',              desc:'Gold storage cap doubled',       color:'#c8a45a'},
+  {id:'ritual_xp',   icon:'🌑', name:'Dark Tide',            desc:'Rituals grant +50 bonus XP',     color:'#8b5cf6'},
+];
+
+const ACHIEVEMENTS = {
+  first_quest: {name:'First Blood', icon:'⚔️', desc:'Complete your first quest'},
+  week_warrior: {name:'Week Warrior', icon:'🔥', desc:'Reach a 7-day streak'},
+  fortnight: {name:'Fortnight', icon:'🌙', desc:'Reach a 14-day streak'},
+  month: {name:'Unbreakable', icon:'🌟', desc:'Reach a 30-day streak'},
+  legendary: {name:'Legendary Find', icon:'💎', desc:'Obtain a legendary item'},
+  level5: {name:'The Forge Awakens', icon:'⚒️', desc:'Reach Level 5'},
+  level10: {name:'Champion', icon:'🏆', desc:'Reach Level 10'},
+  occultist: {name:'Occultist', icon:'🌑', desc:'Complete 10 rituals total'},
+  gold_hoarder: {name:'Gold Hoarder', icon:'💰', desc:'Hold 1,000 gold at once'},
+  raid_master: {name:'Raid Master', icon:'⚡', desc:'Complete 10 raids'},
+  full_gear: {name:'Fully Forged', icon:'🛡️', desc:'Fill every equipment slot'},
+  bonded: {name:'Soul Bonded', icon:'🐾', desc:'Pet reaches Stage 2'},
+};
+
+const PETS = {
+  emberfox: {
+    name:'Emberfox', bonus:'gold',
+    bonusPct:[0, 8, 15, 22, 30],
+    bonusDesc: pct => '+'+pct+'% passive gold/hr',
+    stages:[
+      {emoji:'🥚', name:'Egg',        desc:'Something stirs within...'},
+      {emoji:'🐱', name:'Ember Kit',  desc:'Warm to the touch, curious eyes.'},
+      {emoji:'🦊', name:'Foxling',    desc:'Follows you everywhere, singed paw prints.'},
+      {emoji:'🔥', name:'Blazefox',   desc:'Fur flickering with living flame.'},
+      {emoji:'⚡', name:'Infernokin', desc:'An ancient fire spirit, fully awakened.'},
+    ],
+  },
+  moonowl: {
+    name:'Moonowl', bonus:'ritual',
+    bonusPct:[0, 8, 15, 22, 30],
+    bonusDesc: pct => '+'+pct+'% ritual loot chance',
+    stages:[
+      {emoji:'🥚', name:'Egg',         desc:'Cool and smooth, faintly glowing.'},
+      {emoji:'🐣', name:'Owlet',        desc:'Blinks slowly, sees through shadows.'},
+      {emoji:'🦉', name:'Moonowl',      desc:'Perches silently, drawn to ritual energy.'},
+      {emoji:'🌙', name:'Nightwarden',  desc:'Feathers shimmer like moonlight on water.'},
+      {emoji:'⭐', name:'Starborn',     desc:'A celestial familiar of immense power.'},
+    ],
+  },
+  ironpup: {
+    name:'Ironpup', bonus:'xp',
+    bonusPct:[0, 8, 15, 22, 30],
+    bonusDesc: pct => '+'+pct+'% XP from quests',
+    stages:[
+      {emoji:'🥚', name:'Egg',       desc:'Heavy, thrums with quiet energy.'},
+      {emoji:'🐾', name:'Pup',       desc:'Nips at your heels, full of heart.'},
+      {emoji:'🐺', name:'Ironpup',   desc:'Loyal and fierce, grows with your dedication.'},
+      {emoji:'🦁', name:'Ironmane',  desc:'Mane forged from iron, eyes like embers.'},
+      {emoji:'👑', name:'Ironlord',  desc:'A legendary guardian, unbreakable bond.'},
+    ],
+  },
+  crystoad: {
+    name:'Crystoad', bonus:'all',
+    bonusPct:[0, 2, 4, 6, 8],
+    bonusDesc: pct => '+'+pct+'% to all bonuses',
+    stages:[
+      {emoji:'🥚', name:'Egg',        desc:'Glimmers with every colour.'},
+      {emoji:'🐛', name:'Grublet',    desc:'Wriggles cheerfully, oddly endearing.'},
+      {emoji:'🐸', name:'Crystoad',   desc:'Skin like stained glass, rare and peculiar.'},
+      {emoji:'🦎', name:'Prismkin',   desc:'Refracts light into impossible colours.'},
+      {emoji:'🔮', name:'Oracle',     desc:'A being of pure crystalline magic.'},
+    ],
+  },
+};
+
 // ═══════════════════════ STATE ════════════════════════════════════════
 
 function defaults(){
@@ -467,6 +598,10 @@ function defaults(){
     upgrades:{},
     raidKey:'', raidId:'', raidDone:false, raidHistory:[],
     pendingLoot:null,
+    achievements:[],
+    dailyBuff:{date:'',id:''},
+    lootLog:[],
+    ownedPets:[],
   };
 }
 
@@ -483,6 +618,10 @@ let S = (()=>{
       shopItems:saved.shopItems||[],
       raidHistory:saved.raidHistory||[],
       habits:saved.habits||d.habits,
+      achievements:saved.achievements||[],
+      dailyBuff:saved.dailyBuff||{date:'',id:''},
+      lootLog:saved.lootLog||[],
+      ownedPets:saved.ownedPets||[],
     };
   }catch{return defaults();}
 })();
@@ -534,6 +673,17 @@ function getGph(){
     if(u.special==='cap') return;
     r+=u.gph*(S.upgrades[u.id]||0);
   });
+  const buff=S.dailyBuff&&S.dailyBuff.id==='gold_boost'?1.5:1;
+  r*=buff;
+  // Apply pet gold bonuses
+  let goldPct = 0;
+  (S.ownedPets||[]).forEach(typeId => {
+    const pet = PETS[typeId];
+    const pct = pet.bonusPct[getPetStage()];
+    if(pet.bonus === 'gold') goldPct += pct;
+    if(pet.bonus === 'all') goldPct += pct;
+  });
+  if(goldPct > 0) r = Math.floor(r * (1 + goldPct/100));
   return r;
 }
 
@@ -541,6 +691,8 @@ function getCap(){
   let c=48;
   const vl=S.upgrades['vault']||0;
   c+=vl*24;
+  const buff=S.dailyBuff&&S.dailyBuff.id==='cap_boost'?2:1;
+  c*=buff;
   return c;
 }
 
@@ -565,7 +717,14 @@ function todayCount(){
   return S.habits.filter(h=>h.completions[t]).length;
 }
 
-function canClaim(){ return todayCount()>=3&&S.pendingGold>=100; }
+function getQuota(){
+  const lvl=getLvlInfo().lvl.level;
+  if(lvl<=5)  return 3;
+  if(lvl<=10) return 4;
+  if(lvl<=15) return 5;
+  return 6;
+}
+function canClaim(){ return todayCount()>=getQuota()&&S.pendingGold>=100; }
 
 function getStreak(h){
   let s=0;
@@ -577,6 +736,42 @@ function getStreak(h){
     else break;
   }
   return s;
+}
+
+function getTotalCompletions(){
+  let count=0;
+  S.habits.forEach(h=>{ Object.values(h.completions).forEach(c=>{if(c) count++;}); });
+  (S.rituals||[]).forEach(r=>{ Object.values(r.completions).forEach(c=>{if(c) count++;}); });
+  return count;
+}
+
+function getRitualCompletions(){
+  let count=0;
+  (S.rituals||[]).forEach(r=>{ Object.values(r.completions).forEach(c=>{if(c) count++;}); });
+  return count;
+}
+
+function getPetStage(){
+  const total=getTotalCompletions();
+  const thresholds=[0,30,100,250,500];
+  for(let i=4;i>=0;i--) if(total>=thresholds[i]) return i;
+  return 0;
+}
+
+function getPetInfo(typeId){
+  const type = PETS[typeId]; if(!type) return null;
+  const stage = getPetStage();
+  return {...type, stage, stageData:type.stages[stage], pct:type.bonusPct[stage]};
+}
+
+function getDailyBuff(){
+  const t=today();
+  if(S.dailyBuff.date!==t){
+    const dateNum=parseInt(t.replace(/-/g,''));
+    const idx=dateNum%7;
+    S.dailyBuff={date:t,id:DAILY_BUFFS[idx].id};
+    save();
+  }
 }
 
 // ═══════════════════════ GEAR GEN ════════════════════════════════════
@@ -596,6 +791,12 @@ function rollRarity(pct=0,strPct=0,dexPct=0,wisPct=0){
   let total=Object.values(w).reduce((a,b)=>a+b,0), roll=Math.random()*total;
   for(const[r,wt] of Object.entries(w)){roll-=wt;if(roll<=0) return r;}
   return 'common';
+}
+
+function upgradeRarity(rarity){
+  const idx=RARITIES.indexOf(rarity);
+  if(idx>=RARITIES.length-1) return rarity;
+  return RARITIES[idx+1];
 }
 
 function genItem(rarity,slot){
@@ -628,7 +829,7 @@ function goldTick(){
   document.getElementById('pendG').textContent=pg_g+'g '+String(pg_s).padStart(2,'0')+'s';
   document.getElementById('claimBtn').disabled=!canClaim();
   document.getElementById('hGold').textContent=Math.floor(S.gold);
-  document.getElementById('hQuota').textContent=`${todayCount()}/3 today`;
+  document.getElementById('hQuota').textContent=`${todayCount()}/${getQuota()} today`;
 }
 
 function claimGold(){
@@ -636,13 +837,45 @@ function claimGold(){
   const amt=Math.floor(S.pendingGold/100);
   S.pendingGold=Math.floor(S.pendingGold%100);
   S.gold+=amt;
-  save(); updateHeader();
+  save(); updateHeader(); checkAchievements();
   toast(`💰 +${amt}g claimed!`,'tg');
+}
+
+function checkAchievements(){
+  const info=getLvlInfo();
+  const petInfo=getPetInfo();
+  const ritualCount=getRitualCompletions();
+  const raidCount=S.raidHistory.length;
+  const equippedCount=Object.values(S.equipped).filter(Boolean).length;
+
+  const checks={
+    first_quest: ()=>S.habits.some(h=>Object.values(h.completions).some(c=>c)),
+    week_warrior: ()=>S.habits.some(h=>getStreak(h)>=7),
+    fortnight: ()=>S.habits.some(h=>getStreak(h)>=14),
+    month: ()=>S.habits.some(h=>getStreak(h)>=30),
+    legendary: ()=>S.inventory.some(i=>i.rarity==='legendary')||Object.values(S.equipped).some(i=>i&&i.rarity==='legendary'),
+    level5: ()=>info.lvl.level>=5,
+    level10: ()=>info.lvl.level>=10,
+    occultist: ()=>ritualCount>=10,
+    gold_hoarder: ()=>S.gold>=1000,
+    raid_master: ()=>raidCount>=10,
+    full_gear: ()=>equippedCount===10,
+    bonded: ()=>(S.ownedPets||[]).length>=2,
+  };
+
+  Object.keys(checks).forEach(id=>{
+    if(!S.achievements.includes(id)&&checks[id]()){
+      S.achievements.push(id);
+      save();
+      const ach=ACHIEVEMENTS[id];
+      toast(`🎉 ${ach.icon} ${ach.name}: ${ach.desc}`,'tl');
+    }
+  });
 }
 
 // ═══════════════════════ RENDER ══════════════════════════════════════
 
-function render(){ updateHeader(); renderQuests(); renderCharacter(); renderShop(); renderRaids(); renderUpgrades(); }
+function render(){ getDailyBuff(); updateHeader(); renderQuests(); renderCharacter(); renderShop(); renderRaids(); renderPets(); renderUpgrades(); }
 
 function updateHeader(){
   const{lvl,xpIn,xpFor,prog}=getLvlInfo();
@@ -650,22 +883,40 @@ function updateHeader(){
   document.getElementById('hXpBar').style.width=prog+'%';
   document.getElementById('hXpTxt').textContent=`${xpIn}/${xpFor}`;
   document.getElementById('hGold').textContent=Math.floor(S.gold);
-  document.getElementById('hQuota').textContent=`${todayCount()}/3 today`;
+  document.getElementById('hQuota').textContent=`${todayCount()}/${getQuota()} today`;
 }
 
 function renderQuests(){
+  getDailyBuff();
   const t=today(), done=todayCount();
+
+  // Daily buff card
+  const buffId=S.dailyBuff.id;
+  const buff=DAILY_BUFFS.find(b=>b.id===buffId);
+  if(buff){
+    document.getElementById('dailyBuffCard').innerHTML=`
+      <div class="daily-buff-card" style="border-left-color:${buff.color}">
+        <div class="daily-buff-icon">${buff.icon}</div>
+        <div class="daily-buff-info">
+          <div class="daily-buff-name">${buff.name}</div>
+          <div class="daily-buff-desc">${buff.desc}</div>
+        </div>
+      </div>`;
+  }
+
   // dots
+  const quota=getQuota();
   const dots=document.getElementById('qdots'); dots.innerHTML='';
-  const total=Math.max(S.habits.length,3);
+  const total=Math.max(S.habits.length,quota);
   for(let i=0;i<Math.min(total,10);i++){
     const d=document.createElement('div');
-    d.className='qdot'+(i<done?(i<3?' done':' bonus'):'');
+    d.className='qdot'+(i<done?(i<quota?' done':' bonus'):'');
     dots.appendChild(d);
   }
-  document.getElementById('quotaText').innerHTML=done>=3
+  const rem=quota-done;
+  document.getElementById('quotaText').innerHTML=done>=quota
     ?`<strong>Daily quota met!</strong> Claim your passive gold 💰`
-    :`Complete <strong>${3-done} more quest${3-done!==1?'s':''}</strong> to unlock today's passive gold`;
+    :`Complete <strong>${rem} more quest${rem!==1?'s':''}</strong> to unlock today's passive gold`;
 
   // habits
   const list=document.getElementById('habitList'); list.innerHTML='';
@@ -674,6 +925,9 @@ function renderQuests(){
     const el=document.createElement('div');
     el.className='habit-card'+(isDone?' done':'');
     el.onclick=()=>toggleHabit(h.id);
+    const streakBonus=streak>=7?Math.floor(streak/7)*10:0;
+    const streakMultiplier=(S.dailyBuff&&S.dailyBuff.id==='streak_fire')?2:1;
+    const finalBonus=streakBonus*streakMultiplier;
     el.innerHTML=`
       <button class="habit-del" onclick="event.stopPropagation();deleteHabit('${h.id}')" title="Remove quest">✕</button>
       <div class="h-icon">${h.icon}</div>
@@ -681,7 +935,7 @@ function renderQuests(){
         <div class="h-name">${h.name}</div>
         <div class="h-meta">
           <span>+${h.baseXP} XP</span>
-          ${streak>0?`<span class="h-streak">🔥 ${streak}-day streak</span>`:''}
+          ${streak>0?`<span class="h-streak">🔥 ${streak}-day streak${finalBonus>0?` (+${finalBonus}% XP)`:''}</span>`:''}
         </div>
       </div>
       <div class="h-check">${isDone?'✓':''}</div>`;
@@ -712,6 +966,7 @@ function renderQuests(){
 }
 
 function renderCharacter(){
+
   // Equipment grid - OSRS layout:
   // row1: [cape]  [head]   [amulet]
   // row2: [weapon][🧙]     [shield]
@@ -720,9 +975,8 @@ function renderCharacter(){
   // row5: [empty] [boots]  [empty]
   const layout=[
     ['cape','head','amulet'],
-    ['weapon','CHAR','shield'],
-    ['gloves','body','ring'],
-    [null,'legs',null],
+    ['weapon','body','shield'],
+    ['gloves','legs','ring'],
     [null,'boots',null],
   ];
   const grid=document.getElementById('equipGrid'); grid.innerHTML='';
@@ -780,6 +1034,19 @@ function renderCharacter(){
     <div class="stat-row"><span>Gold / Hour</span><span style="color:var(--gold)">${getGph()} 💰</span></div>
     <div class="stat-row"><span>Gold Cap</span><span style="color:var(--gold)">${getCap()}h storage</span></div>
     <div class="stat-row"><span>Equipped</span><span>${Object.values(S.equipped).filter(Boolean).length}/10 slots</span></div>`;
+
+  // Achievements
+  if(S.achievements.length>0){
+    let achHtml=`<div class="achievements-section"><div class="sec">Achievements</div><div class="achievements-grid">`;
+    S.achievements.forEach(id=>{
+      const ach=ACHIEVEMENTS[id];
+      achHtml+=`<div class="achievement-badge" title="${ach.desc}"><div class="achievement-icon">${ach.icon}</div><div class="achievement-name">${ach.name}</div></div>`;
+    });
+    achHtml+=`</div></div>`;
+    document.getElementById('achievementsContainer').innerHTML=achHtml;
+  } else {
+    document.getElementById('achievementsContainer').innerHTML='';
+  }
 }
 
 function renderShop(){
@@ -880,6 +1147,21 @@ function renderRaids(){
         </div>
       </div>`).join('');
   }
+
+  // Loot history
+  let lootHistHtml='';
+  if(S.lootLog&&S.lootLog.length>0){
+    lootHistHtml=`<div class="loot-history-section"><div class="sec">Loot History</div><div>`;
+    S.lootLog.slice(0,20).forEach(entry=>{
+      const dateStr=new Date(entry.date).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      const sourceLabel=entry.source==='raid'?'⚡ Raid':entry.source==='ritual'?'✦ Ritual':'📦 Chest';
+      lootHistHtml+=`<div class="loot-entry"><div class="loot-entry-item">${entry.item.icon}</div><div style="flex:1"><div style="color:${RCOL[entry.item.rarity]};font-weight:700;font-size:.78rem">${RLBL[entry.item.rarity]}</div><div style="color:var(--muted);font-size:.7rem">${entry.item.name}</div></div><div style="text-align:right;color:var(--muted);font-size:.7rem"><div>${sourceLabel}</div><div>${dateStr}</div></div></div>`;
+    });
+    lootHistHtml+=`</div></div>`;
+  } else {
+    lootHistHtml=`<div class="loot-history-section"><div class="sec">Loot History</div><div style="color:var(--muted);font-size:.83rem;padding:8px 0">No loot dropped yet.</div></div>`;
+  }
+  document.getElementById('lootHistorySection').innerHTML=lootHistHtml;
 }
 
 function renderUpgrades(){
@@ -918,20 +1200,53 @@ function toggleHabit(id){
   }
   h.completions[t]=true;
   const prev=getLvlInfo();
-  S.totalXP+=h.baseXP;
+  let xpGain=h.baseXP;
+
+  // Apply xp_boost buff
+  if(S.dailyBuff&&S.dailyBuff.id==='xp_boost'){
+    xpGain*=1.5;
+  }
+
+  // Apply streak bonus
+  const streak=getStreak(h);
+  if(streak>=7){
+    let streakBonus=Math.floor(streak/7)*10;
+    if(S.dailyBuff&&S.dailyBuff.id==='streak_fire'){
+      streakBonus*=2;
+    }
+    xpGain*=(1+streakBonus/100);
+  }
+
+  // Apply pet XP bonuses
+  let petXpPct = 0;
+  (S.ownedPets||[]).forEach(typeId => {
+    const pet = PETS[typeId];
+    const pct = pet.bonusPct[getPetStage()];
+    if(pet.bonus === 'xp') petXpPct += pct;
+    if(pet.bonus === 'all') petXpPct += pct;
+  });
+  if(petXpPct > 0) xpGain = Math.floor(xpGain * (1 + petXpPct/100));
+
+  S.totalXP+=Math.floor(xpGain);
   const nw=getLvlInfo();
-  toast(`+${h.baseXP} XP — ${h.name}`,'tx');
+  toast(`+${Math.floor(xpGain)} XP — ${h.name}`,'tx');
   if(nw.lvl.level>prev.lvl.level) setTimeout(()=>showLevelUp(nw.lvl.level,nw.lvl.title),400);
-  if(todayCount()===3) toast('🔓 3 quests done! Claim your passive gold!','tg');
-  save(); render();
+  if(todayCount()===getQuota()) toast(`🔓 ${getQuota()} quests done! Claim your passive gold!`,'tg');
+  save(); render(); checkAchievements();
 }
 
-let selEmoji='🎯';
+function parseEmoji(raw){
+  const m=raw.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})\s*:?\s*/u);
+  if(m) return {icon:m[1], name:raw.slice(m[0].length).trim()};
+  return {icon:'🎯', name:raw.trim()};
+}
 function addHabit(){
-  const name=document.getElementById('hName').value.trim();
+  const raw=document.getElementById('hName').value.trim();
   const xp=parseInt(document.getElementById('hXP').value)||20;
+  if(!raw) return;
+  const {icon,name}=parseEmoji(raw);
   if(!name) return;
-  S.habits.push({id:'h'+Date.now(),name,icon:selEmoji,baseXP:Math.max(5,Math.min(100,xp)),completions:{}});
+  S.habits.push({id:'h'+Date.now(),name,icon,baseXP:Math.max(5,Math.min(100,xp)),completions:{}});
   document.getElementById('hName').value='';
   document.getElementById('addForm').classList.remove('show');
   save(); render();
@@ -951,28 +1266,51 @@ function completeRitual(id){
   const r=(S.rituals||[]).find(x=>x.id===id); if(!r) return;
   if(r.completions[t]){ toast('✦ This ritual is already sealed for today.',''); return; }
   r.completions[t]=true;
-  S.totalXP+=25;
+  let xpGain=25;
+
+  // Apply ritual_xp buff
+  if(S.dailyBuff&&S.dailyBuff.id==='ritual_xp'){
+    xpGain+=50;
+  }
+
+  S.totalXP+=xpGain;
   save(); render();
-  if(Math.random()*100 < r.lootChance){
+  let petRitualPct = 0;
+  (S.ownedPets||[]).forEach(typeId => {
+    const pet = PETS[typeId];
+    const pct = pet.bonusPct[getPetStage()];
+    if(pet.bonus === 'ritual') petRitualPct += pct;
+    if(pet.bonus === 'all') petRitualPct += pct;
+  });
+  const effectiveLootChance = r.lootChance + petRitualPct + (S.dailyBuff&&S.dailyBuff.id==='lucky_drops'?25:0);
+  if(Math.random()*100 < effectiveLootChance){
     const rs=getRaidStats();
     const scaledStr=Math.min(3,rs.str/90*3);
     const scaledDex=Math.min(3,rs.dex/90*3);
     const scaledWis=Math.min(3,rs.wis/90*3);
-    const rarity=rollRarity(0,scaledStr,scaledDex,scaledWis);
+    let rarity=rollRarity(0,scaledStr,scaledDex,scaledWis);
+
+    // Apply rarity_up buff
+    if(S.dailyBuff&&S.dailyBuff.id==='rarity_up'){
+      rarity=upgradeRarity(rarity);
+    }
+
     const item=genItem(rarity);
     S.pendingRitualLoot=item; save();
     setTimeout(()=>showLootReveal(item,false,'ritual'),600);
   } else {
-    toast('✦ Ritual complete — +25 XP','tx');
+    toast(`✦ Ritual complete — +${xpGain} XP`,'tx');
   }
+  checkAchievements();
 }
 
-let selRitualEmoji='🕯️';
 function addRitual(){
-  const name=document.getElementById('ritualName').value.trim();
+  const raw=document.getElementById('ritualName').value.trim();
+  if(!raw) return;
+  const {icon,name}=parseEmoji(raw);
   if(!name) return;
   if(!S.rituals) S.rituals=[];
-  S.rituals.push({id:'rit'+Date.now(),name,icon:selRitualEmoji,completions:{},lootChance:35});
+  S.rituals.push({id:'rit'+Date.now(),name,icon,completions:{},lootChance:35});
   document.getElementById('ritualName').value='';
   document.getElementById('ritualForm').classList.remove('show');
   save(); render();
@@ -1010,6 +1348,7 @@ function buyShopItem(idx){
   S.shopItems.splice(idx,1);
   save(); renderShop(); renderCharacter(); updateHeader();
   toast(`✅ Bought ${item.name}!`,'tx');
+  checkAchievements();
 }
 
 function openChest(type){
@@ -1022,7 +1361,7 @@ function openChest(type){
   const r=rollRarity(b*3,b,b,b);
   const item=genItem(r);
   S.inventory.push(item);
-  save(); showLootReveal(item,false); renderCharacter(); updateHeader();
+  save(); showLootReveal(item,false,'chest'); renderCharacter(); updateHeader();
 }
 
 function equipItem(itemId){
@@ -1032,6 +1371,7 @@ function equipItem(itemId){
   S.inventory=S.inventory.filter(i=>i.id!==itemId);
   save(); closeOverlay('itemOverlay'); renderCharacter();
   toast(`⚔️ Equipped ${item.name}!`,'');
+  checkAchievements();
 }
 
 function unequipItem(slot){
@@ -1106,6 +1446,7 @@ function buyUpgrade(id){
   S.gold-=cost; S.upgrades[id]=lvl+1;
   save(); updateHeader(); renderUpgrades();
   toast(`✅ ${u.name} upgraded to Lv.${lvl+1}!`,'tx');
+  checkAchievements();
 }
 
 function ensureRaid(){
@@ -1135,11 +1476,11 @@ function completeRaid(){
   const goldBonus=raid.diff*50; S.gold+=goldBonus;
   S.raidHistory.unshift({rIcon:raid.icon,rName:raid.name,item:{...item},date:today(),week:S.raidKey});
   if(S.raidHistory.length>20) S.raidHistory.pop();
-  save(); showLootReveal(item,true); render();
+  save(); showLootReveal(item,true,'raid'); render(); checkAchievements();
 }
 
 function showLootReveal(item,fromRaid,source){
-  document.getElementById('lootSource').textContent=source==='ritual'?'✦ The ritual bore fruit...':'⚡ Raid Complete!';
+  document.getElementById('lootSource').textContent=source==='ritual'?'✦ The ritual bore fruit...':source==='chest'?'📦 Chest opened!':'⚡ Raid Complete!';
   document.getElementById('lootIcon').textContent=item.icon;
   const lr=document.getElementById('lootRar');
   lr.textContent=RLBL[item.rarity].toUpperCase(); lr.style.color=RCOL[item.rarity];
@@ -1149,6 +1490,17 @@ function showLootReveal(item,fromRaid,source){
     <div class="loot-chip">🏹 DEX +${item.dex}</div>
     <div class="loot-chip">🧠 WIS +${item.wis}</div>`;
   document.getElementById('lootOverlay').classList.add('show');
+
+  // Add to loot log
+  if(!S.lootLog) S.lootLog=[];
+  S.lootLog.unshift({
+    source:source||'raid',
+    sourceName:source==='ritual'?'Unknown Ritual':source==='chest'?'Mystery Chest':'Unknown Raid',
+    item:{icon:item.icon,name:item.name,rarity:item.rarity},
+    date:new Date().toISOString(),
+  });
+  if(S.lootLog.length>30) S.lootLog.pop();
+  save();
 }
 
 function closeLoot(){
@@ -1159,11 +1511,74 @@ function closeLoot(){
     save(); renderCharacter();
   }
   closeOverlay('lootOverlay');
+  checkAchievements();
 }
 
 function showLevelUp(level,title){
   document.getElementById('lvlSub').textContent=`You are now Level ${level} — ${title}!`;
   document.getElementById('lvlOverlay').classList.add('show');
+}
+
+function renderPets(){
+  const totalComp = getTotalCompletions();
+  const thresholds = [0, 30, 100, 250, 500];
+  
+  let html = '';
+  
+  // Owned pets section
+  if(S.ownedPets.length > 0){
+    html += '<div style="margin-bottom:20px">';
+    S.ownedPets.forEach(typeId => {
+      const petDef = PETS[typeId];
+      const stage = getPetStage();
+      const stageData = petDef.stages[stage];
+      const nextThreshold = stage < 4 ? thresholds[stage + 1] : thresholds[4];
+      const currentThreshold = thresholds[stage];
+      const progressPct = stage < 4 ? ((totalComp - currentThreshold) / (nextThreshold - currentThreshold)) * 100 : 100;
+      const pct = petDef.bonusPct[stage];
+      
+      html += `<div class="pet-owned-card">
+        <div class="pet-owned-emoji">${stageData.emoji}</div>
+        <div class="pet-owned-info">
+          <div class="pet-owned-name">${petDef.name} — ${stageData.name}</div>
+          <div class="pet-owned-desc">${stageData.desc}</div>
+          ${stage < 4 ? `<div class="pet-progress"><div class="pet-progress-fill" style="width:${Math.min(100, progressPct)}%"></div></div>` : `<div style="color:var(--gold);font-size:.85rem;font-weight:700">MAX STAGE ✦</div>`}
+          <div class="pet-owned-bonus">${petDef.bonusDesc(pct)}</div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  
+  // Available familiars section
+  const unavailablePets = Object.keys(PETS).filter(typeId => !S.ownedPets.includes(typeId));
+  if(unavailablePets.length > 0){
+    html += '<div style="margin-top:20px"><div style="font-weight:700;font-size:.95rem;margin-bottom:10px;color:var(--muted)">Available Familiars</div>';
+    unavailablePets.forEach(typeId => {
+      const petDef = PETS[typeId];
+      const maxStage = petDef.bonusPct[4];
+      const cost = PET_COSTS[typeId];
+      const canAfford = S.gold >= cost;
+      
+      html += `<div class="pet-available">
+        <div class="pet-available-icon">🥚</div>
+        <div class="pet-available-info">
+          <div class="pet-available-name">${petDef.name}</div>
+          <div class="pet-available-bonus">+${maxStage}% ${petDef.bonus === 'all' ? 'to all bonuses' : petDef.bonus === 'gold' ? 'passive gold/hr' : petDef.bonus === 'xp' ? 'XP from quests' : 'ritual loot chance'}</div>
+        </div>
+        <div class="pet-available-cost">${cost} 💰</div>
+        <button class="btn btn-g btn-sm" onclick="buyPet('${typeId}')" ${canAfford ? '' : 'disabled'}>Buy</button>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  
+  // If no pets and no message yet, show a welcome message
+  if(S.ownedPets.length === 0 && unavailablePets.length === 0){
+    html = '<div style="color:var(--muted);text-align:center;padding:20px">No pets available</div>';
+  }
+  
+  document.getElementById('petsPage').innerHTML = html;
 }
 
 // ═══════════════════════ UI HELPERS ══════════════════════════════════
@@ -1196,25 +1611,18 @@ function toast(msg,cls){
 
 // ═══════════════════════ INIT ═════════════════════════════════════════
 
-// Quest emoji picker
-const ep=document.getElementById('ePicker');
-EMOJIS.forEach(e=>{
-  const b=document.createElement('div');
-  b.className='eo'+(e===selEmoji?' sel':'');
-  b.textContent=e;
-  b.onclick=()=>{ selEmoji=e; ep.querySelectorAll('.eo').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); };
-  ep.appendChild(b);
-});
+function buyPet(typeId){
+  const cost = PET_COSTS[typeId];
+  if(S.gold < cost){ toast('❌ Not enough gold!',''); return; }
+  if(S.ownedPets.includes(typeId)){ toast('Already owned!',''); return; }
+  S.gold -= cost;
+  S.ownedPets.push(typeId);
+  const pet = PETS[typeId];
+  save(); render(); updateHeader();
+  toast('🐾 ' + pet.name + ' joined your forge!', 'tg');
+  checkAchievements();
+}
 
-// Ritual emoji picker
-const rep=document.getElementById('ritualEPicker');
-RITUAL_EMOJIS.forEach(e=>{
-  const b=document.createElement('div');
-  b.className='eo'+(e===selRitualEmoji?' sel':'');
-  b.textContent=e;
-  b.onclick=()=>{ selRitualEmoji=e; rep.querySelectorAll('.eo').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); };
-  rep.appendChild(b);
-});
 
 // Catch up on offline gold
 (()=>{
