@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>HabitForge</title>
+<!-- PWA / Add to Home Screen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HabitForge">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d0d16">
+<style>
+:root {
+  --bg:#0d0d16; --bg2:#111120; --card:#16162a; --card2:#1e1e36;
+  --border:#2a2a4a; --accent:#7c3aed; --accent2:#a855f7;
+  --gold:#f59e0b; --gold2:#fbbf24; --green:#10b981; --red:#ef4444;
+  --text:#e2e8f0; --muted:#64748b;
+  --common:#9d9d9d; --uncommon:#1eff00; --rare:#0070dd; --epic:#a335ee; --legendary:#ff8000;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:linear-gradient(135deg,#0d0620 0%,#1a0835 30%,#280818 60%,#1c0900 100%);background-attachment:fixed;color:var(--text);font-family:'Segoe UI',sans-serif;min-height:100vh;}
+
+/* HEADER */
+header{background:var(--card);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;flex-wrap:wrap;}
+.logo{font-size:1.2rem;font-weight:800;background:linear-gradient(135deg,#c026d3,#7c3aed,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap;}
+.hdr-stats{display:flex;gap:8px;flex-wrap:wrap;flex:1;align-items:center;}
+.pill{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:4px 11px;font-size:0.8rem;display:flex;align-items:center;gap:5px;white-space:nowrap;}
+.pill.gold-pill{border-color:var(--gold);}
+.pill.xp-pill{border-color:var(--accent);}
+.xp-bar-mini{width:80px;height:5px;background:var(--bg);border-radius:99px;overflow:hidden;}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;transition:width .4s ease;}
+.gold-ticker{background:linear-gradient(135deg,#1a1400,#251c00);border:1px solid var(--gold);border-radius:20px;padding:4px 12px;font-size:0.8rem;display:flex;align-items:center;gap:7px;}
+.pending-gold{color:var(--gold);font-weight:700;}
+.claim-btn{background:var(--gold);color:#000;border:none;border-radius:10px;padding:3px 9px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all .15s;}
+.claim-btn:hover{background:var(--gold2);}
+.claim-btn:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;}
+
+/* TABS */
+.tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:11px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:0.85rem;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent2);border-bottom-color:var(--accent2);}
+.page{display:none;max-width:820px;margin:0 auto;padding:20px 14px;}
+.page.active{display:block;}
+
+/* UTILS */
+.sec{font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;}
+.btn{padding:8px 17px;border-radius:8px;border:none;cursor:pointer;font-size:0.83rem;font-weight:600;transition:all .15s;}
+.btn-p{background:var(--accent);color:#fff;}.btn-p:hover{background:var(--accent2);}
+.btn-g{background:var(--gold);color:#000;}.btn-g:hover{background:var(--gold2);}
+.btn-g:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}.btn-ghost:hover{color:var(--text);}
+.btn-sm{padding:4px 10px;font-size:0.75rem;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;}
+
+/* RARITY */
+.rc{color:var(--common)}.ru{color:var(--uncommon)}.rr{color:var(--rare)}.re{color:var(--epic)}.rl{color:var(--legendary)}
+.bc{border-color:var(--common)!important}.bu{border-color:var(--uncommon)!important}.br{border-color:var(--rare)!important}.be{border-color:var(--epic)!important}.bl{border-color:var(--legendary)!important}
+.bgc{background:rgba(157,157,157,.12)!important}.bgu{background:rgba(30,255,0,.08)!important}.bgr{background:rgba(0,112,221,.12)!important}.bge{background:rgba(163,53,238,.12)!important}.bgl{background:rgba(255,128,0,.12)!important}
+
+/* ===== QUESTS TAB ===== */
+.quota-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;background:var(--card);border:1px solid var(--border);margin-bottom:14px;}
+.quota-dots{display:flex;gap:5px;}
+.qdot{width:11px;height:11px;border-radius:50%;background:var(--border);}
+.qdot.done{background:var(--green);}
+.qdot.bonus{background:var(--gold);}
+.shield-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;background:var(--bg2);border:1px solid #1a3a5a;margin-bottom:14px;font-size:0.82rem;}
+.shield-val{color:#60b4ff;font-weight:700;font-size:1rem;}
+.habit-list{display:flex;flex-direction:column;gap:9px;margin-bottom:14px;}
+.habit-card{display:flex;align-items:center;gap:11px;padding:13px 15px;border-radius:11px;background:var(--card);border:1px solid var(--border);cursor:pointer;user-select:none;transition:all .15s;}
+.habit-card:hover{border-color:var(--accent);}
+.habit-card.done{background:#0e1e0e;border-color:#1a4020;}
+.h-icon{width:40px;height:40px;background:var(--bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
+.h-info{flex:1;}
+.h-name{font-weight:600;font-size:0.92rem;}
+.h-meta{display:flex;gap:8px;font-size:0.75rem;color:var(--muted);margin-top:2px;}
+.h-xpb{color:var(--accent2);}
+.h-streak{color:var(--gold);}
+.h-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-size:.85rem;}
+.habit-card.done .h-check{background:var(--green);border-color:var(--green);}
+.habit-del{background:none;border:none;cursor:pointer;font-size:.72rem;color:var(--border);padding:0 5px 0 0;transition:color .15s;flex-shrink:0;line-height:1;font-weight:700;}
+.habit-del:hover{color:#ef4444;}
+.add-btn{width:100%;background:transparent;border:2px dashed var(--border);border-radius:11px;padding:11px;color:var(--muted);font-size:0.85rem;cursor:pointer;transition:all .15s;margin-bottom:14px;}
+.add-btn:hover{border-color:var(--accent);color:var(--accent2);}
+.add-form{display:none;margin-bottom:14px;}
+.add-form.show{display:block;}
+.form-input{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:0.85rem;outline:none;}
+.form-input:focus{border-color:var(--accent);}
+.emoji-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px;}
+.eo{width:32px;height:32px;background:var(--bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;}
+.eo:hover,.eo.sel{border-color:var(--accent);background:var(--card2);}
+
+/* ===== RITUALS ===== */
+.ritual-section-hdr{display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px;}
+.ritual-hdr-title{font-size:0.72rem;font-weight:700;color:#a855f7;text-transform:uppercase;letter-spacing:.12em;}
+.ritual-list{display:flex;flex-direction:column;gap:9px;margin-bottom:14px;}
+.ritual-card{display:flex;align-items:center;gap:11px;padding:13px 15px;border-radius:11px;background:linear-gradient(135deg,#0d0620 0%,#130826 100%);border:1px solid #4a1d6e;cursor:pointer;user-select:none;transition:all .2s;position:relative;overflow:hidden;}
+.ritual-card::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at top left,rgba(168,85,247,.07),transparent 60%);pointer-events:none;}
+.ritual-card:hover{border-color:#a855f7;box-shadow:0 0 14px rgba(168,85,247,.22);}
+.ritual-card.done{opacity:.55;border-color:#2d0e4a;box-shadow:none;}
+.ritual-icon{width:40px;height:40px;background:rgba(168,85,247,.13);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;border:1px solid rgba(168,85,247,.3);}
+.ritual-name{font-weight:600;font-size:0.92rem;}
+.ritual-meta{display:flex;gap:8px;font-size:0.75rem;color:#8b5cf6;margin-top:2px;}
+.ritual-check{width:24px;height:24px;border-radius:50%;border:2px solid #4a1d6e;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;font-size:.8rem;color:#a855f7;}
+.ritual-card.done .ritual-check{background:#6d28d9;border-color:#6d28d9;color:#fff;}
+.ritual-del{background:none;border:none;cursor:pointer;font-size:.72rem;color:#6d28d9;padding:0 5px 0 0;transition:color .15s;flex-shrink:0;line-height:1;font-weight:700;}
+.ritual-del:hover{color:#ef4444;}
+.add-ritual-btn{width:100%;background:transparent;border:2px dashed #3d1760;border-radius:11px;padding:11px;color:#7c3aed;font-size:0.85rem;cursor:pointer;transition:all .15s;margin-bottom:14px;}
+.add-ritual-btn:hover{border-color:#a855f7;color:#a855f7;}
+.ritual-form{display:none;margin-bottom:14px;background:linear-gradient(135deg,#0d0620,#150a2a)!important;border-color:#4a1d6e!important;}
+.ritual-form.show{display:block;}
+
+/* ===== CHARACTER TAB ===== */
+.char-layout{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.equip-panel{background:linear-gradient(135deg,#100c04,#160e06);border:2px solid #4a3200;border-radius:12px;padding:16px;}
+.equip-title{text-align:center;font-size:0.75rem;color:#c8a45a;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;}
+.equip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;place-items:center;}
+.eslot{width:50px;height:50px;background:#080600;border:2px solid #3a2600;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .15s;position:relative;flex-direction:column;font-size:0.55rem;color:#5a4020;text-align:center;}
+.eslot:hover{border-color:#c8a45a;}
+.eslot.filled{border-color:#6a4a18;}
+.eslot .si{font-size:1.3rem;}
+.eslot .rdot{position:absolute;bottom:2px;right:2px;width:6px;height:6px;border-radius:50%;}
+.eslot .slabel{font-size:0.5rem;color:#5a4020;margin-top:1px;}
+.char-center{font-size:2.2rem;display:flex;align-items:center;justify-content:center;width:50px;height:50px;}
+.inv-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;}
+.inv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+.inv-item{aspect-ratio:1;background:var(--bg);border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;font-size:1.2rem;position:relative;}
+.inv-item:hover{transform:scale(1.08);}
+.stats-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:12px;}
+.stat-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:0.83rem;}
+.stat-row:last-child{border-bottom:none;}
+
+/* ===== SHOP TAB ===== */
+.shop-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px;}
+.shop-card{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:13px;display:flex;flex-direction:column;gap:8px;transition:transform .15s;}
+.shop-card:hover{transform:translateY(-2px);}
+.sc-top{display:flex;align-items:center;gap:9px;}
+.sc-icon{width:42px;height:42px;background:var(--bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:2px solid var(--border);}
+.sc-name{font-weight:600;font-size:0.87rem;}
+.sc-rar{font-size:0.72rem;font-weight:700;text-transform:uppercase;}
+.sc-stats{font-size:0.78rem;color:var(--muted);}
+.sc-foot{display:flex;justify-content:space-between;align-items:center;}
+.price{color:var(--gold);font-weight:700;font-size:0.85rem;}
+.chests-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.chest-card{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:13px;text-align:center;}
+
+/* ===== RAIDS TAB ===== */
+.raid-card{background:linear-gradient(135deg,#130820,#1a0812);border:2px solid #4a1a6a;border-radius:14px;padding:22px;margin-bottom:18px;text-align:center;}
+.raid-icon{font-size:3rem;margin-bottom:10px;}
+.raid-title{font-size:1.15rem;font-weight:800;color:var(--accent2);margin-bottom:6px;}
+.raid-desc{color:var(--muted);font-size:0.85rem;margin-bottom:14px;}
+.raid-chips{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.raid-chip{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:5px 11px;font-size:0.78rem;display:flex;align-items:center;gap:5px;}
+.hist-item{display:flex;align-items:center;gap:9px;padding:11px 13px;border-radius:10px;background:var(--card);border:1px solid var(--border);margin-bottom:7px;font-size:0.82rem;}
+
+/* ===== UPGRADES TAB ===== */
+.upg-list{display:flex;flex-direction:column;gap:9px;}
+.upg-row{display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:11px;background:var(--card);border:1px solid var(--border);}
+.upg-icon{font-size:1.5rem;flex-shrink:0;}
+.upg-info{flex:1;}
+.upg-name{font-weight:600;font-size:0.88rem;margin-bottom:2px;}
+.upg-desc{font-size:0.77rem;color:var(--muted);}
+.upg-lvl{font-size:0.72rem;color:var(--accent2);margin-top:2px;}
+.upg-row.maxed{opacity:.5;}
+
+/* ===== MODALS ===== */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center;}
+.overlay.show{display:flex;}
+.modal{background:var(--card2);border:2px solid var(--accent);border-radius:16px;padding:26px;max-width:350px;width:92%;animation:popIn .3s ease;}
+.loot-modal{background:var(--card2);border:2px solid var(--accent2);border-radius:18px;padding:30px;max-width:320px;width:92%;text-align:center;animation:popIn .35s ease;}
+.lvlup-modal{background:linear-gradient(135deg,#1a0a2e,#1e0a1e);border:2px solid var(--accent);border-radius:18px;padding:34px;max-width:310px;width:92%;text-align:center;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);}
+@keyframes popIn{from{transform:scale(.75);opacity:0;}to{transform:none;opacity:1;}}
+.m-hdr{display:flex;align-items:center;gap:11px;margin-bottom:14px;}
+.m-icon{width:54px;height:54px;background:var(--bg);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:2rem;border:2px solid var(--border);flex-shrink:0;}
+.m-stat{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:0.85rem;}
+.m-stat:last-child{border-bottom:none;}
+.m-acts{display:flex;gap:9px;margin-top:14px;}
+.loot-big{font-size:4rem;margin-bottom:12px;animation:bounce .5s ease;}
+@keyframes bounce{0%,100%{transform:scale(1);}50%{transform:scale(1.3);}}
+.loot-rarity{font-size:1.2rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;}
+.loot-name{font-size:.9rem;color:var(--muted);margin-bottom:16px;}
+.loot-chips{display:flex;gap:8px;justify-content:center;margin-bottom:18px;flex-wrap:wrap;}
+.loot-chip{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:.78rem;}
+
+/* TOASTS */
+.toast-box{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:6px;z-index:300;pointer-events:none;}
+.toast{background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:9px 15px;font-size:.83rem;box-shadow:0 4px 20px rgba(0,0,0,.5);animation:toastIn .3s ease;pointer-events:auto;}
+@keyframes toastIn{from{transform:translateX(70px);opacity:0;}to{transform:none;opacity:1;}}
+.tg{border-color:var(--gold);}.tx{border-color:var(--accent);}.tl{border-color:var(--legendary);}
+
+/* Responsive */
+@media(max-width:520px){.char-layout{grid-template-columns:1fr;}.shop-grid{grid-template-columns:1fr;}.chests-grid{grid-template-columns:repeat(3,1fr);}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">⚒️ HabitForge</div>
+  <div class="hdr-stats">
+    <div class="pill xp-pill">
+      <span id="hLvl" style="font-weight:700;color:var(--accent2);white-space:nowrap">Lv.1 Peasant</span>
+      <div class="xp-bar-mini"><div class="xp-fill" id="hXpBar" style="width:0%"></div></div>
+      <span id="hXpTxt" style="color:var(--muted);font-size:.72rem">0/100</span>
+    </div>
+    <div class="pill gold-pill">💰 <strong id="hGold" style="color:var(--gold)">0</strong></div>
+    <div class="gold-ticker">
+      ⏳ <span class="pending-gold" id="pendG">0g 00s</span>
+      <button class="claim-btn" id="claimBtn" onclick="claimGold()" disabled>Claim</button>
+    </div>
+    <div class="pill" id="hQuota" style="font-size:.75rem;color:var(--muted)">0/3 today</div>
+  </div>
+</header>
+
+<!-- TABS -->
+<nav class="tabs">
+  <button class="tab active" onclick="goTab('quests',this)">⚔️ Quests</button>
+  <button class="tab" onclick="goTab('character',this)">🛡️ Character</button>
+  <button class="tab" onclick="goTab('shop',this)">🏪 Shop</button>
+  <button class="tab" onclick="goTab('raids',this)">⚡ Raids</button>
+  <button class="tab" onclick="goTab('upgrades',this)">⚙️ Upgrades</button>
+</nav>
+
+<!-- QUESTS PAGE -->
+<div class="page active" id="page-quests">
+  <div class="quota-bar">
+    <div class="quota-dots" id="qdots"></div>
+    <div style="flex:1;font-size:.83rem" id="quotaText"></div>
+  </div>
+  <div class="habit-list" id="habitList"></div>
+  <button class="add-btn" onclick="toggleAddForm()">+ Add new quest</button>
+  <div class="add-form card" id="addForm">
+    <div style="font-weight:600;margin-bottom:10px">New Quest</div>
+    <div class="emoji-row" id="ePicker"></div>
+    <div style="display:flex;gap:8px;margin-bottom:9px;flex-wrap:wrap">
+      <input class="form-input" id="hName" placeholder="Quest name…" style="flex:1;min-width:120px"/>
+      <input class="form-input" id="hXP" type="number" value="20" min="5" max="100" style="width:90px"/>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-p" onclick="addHabit()">Add</button>
+      <button class="btn btn-ghost" onclick="toggleAddForm()">Cancel</button>
+    </div>
+  </div>
+  <!-- RITUALS -->
+  <div class="ritual-section-hdr">
+    <div class="ritual-hdr-title">🌑 Rituals</div>
+  </div>
+  <div class="ritual-list" id="ritualList"></div>
+  <button class="add-ritual-btn" onclick="toggleRitualForm()">✦ Add new ritual</button>
+  <div class="add-form ritual-form card" id="ritualForm">
+    <div style="font-weight:600;margin-bottom:10px;color:#a855f7">✦ Bind a New Ritual</div>
+    <div class="emoji-row" id="ritualEPicker"></div>
+    <input class="form-input" id="ritualName" placeholder="Ritual name…" style="width:100%;margin-bottom:9px;box-sizing:border-box"/>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-p" onclick="addRitual()" style="background:#7c3aed">Bind Ritual</button>
+      <button class="btn btn-ghost" onclick="toggleRitualForm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHARACTER PAGE -->
+<div class="page" id="page-character">
+  <div class="char-layout">
+    <div>
+      <div class="equip-panel">
+        <div class="equip-title">⚔️ Equipment</div>
+        <div class="equip-grid" id="equipGrid"></div>
+      </div>
+    </div>
+    <div>
+      <div class="inv-panel">
+        <div class="sec" style="margin-bottom:8px">Inventory <span id="invCnt" style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(0)</span></div>
+        <div class="inv-grid" id="invGrid"></div>
+        <div id="invEmpty" style="color:var(--muted);font-size:.82rem;padding:8px 0">Visit Shop or complete Raids to get gear!</div>
+      </div>
+      <div class="stats-panel">
+        <div class="sec" style="margin-bottom:8px">Character Stats</div>
+        <div id="charStats"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHOP PAGE -->
+<div class="page" id="page-shop">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div>
+      <div style="font-weight:700;font-size:1rem">Equipment Shop</div>
+      <div style="color:var(--muted);font-size:.78rem" id="shopRefTxt">Refreshes daily</div>
+    </div>
+    <button class="btn btn-g btn-sm" onclick="shopRefresh(true)" id="shopRefBtn">🔄 Refresh (50💰)</button>
+  </div>
+  <div class="shop-grid" id="shopGrid"></div>
+  <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px">
+    <div style="font-weight:700;margin-bottom:12px">🎰 Mystery Chests</div>
+    <div class="chests-grid" id="chestsGrid"></div>
+  </div>
+</div>
+
+<!-- RAIDS PAGE -->
+<div class="page" id="page-raids">
+  <div id="raidMain"></div>
+  <div style="margin-top:18px">
+    <div class="sec">Past Raids</div>
+    <div id="raidHist"></div>
+    <div id="raidHistEmpty" style="color:var(--muted);font-size:.83rem;padding:8px 0">No raids completed yet.</div>
+  </div>
+</div>
+
+<!-- UPGRADES PAGE -->
+<div class="page" id="page-upgrades">
+  <div style="margin-bottom:14px">
+    <div style="font-weight:700;font-size:1rem;margin-bottom:3px">⚙️ Passive Income</div>
+    <div style="font-size:.8rem;color:var(--muted)">Upgrade your gold/hour. Complete 3 habits daily to claim.</div>
+  </div>
+  <div class="upg-list" id="upgGrid"></div>
+</div>
+
+<!-- ITEM MODAL -->
+<div class="overlay" id="itemOverlay">
+  <div class="modal">
+    <div class="m-hdr">
+      <div class="m-icon" id="mIcon">⚔️</div>
+      <div>
+        <div style="font-weight:700;font-size:1rem" id="mName">Item</div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase" id="mRarity">Common</div>
+        <div style="font-size:.73rem;color:var(--muted)" id="mSlot">Head</div>
+      </div>
+    </div>
+    <div id="mStats"></div>
+    <div class="m-acts" id="mActs"></div>
+  </div>
+</div>
+
+<!-- LOOT MODAL -->
+<div class="overlay" id="lootOverlay">
+  <div class="loot-modal">
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:8px" id="lootSource">⚡ Raid Complete!</div>
+    <div class="loot-big" id="lootIcon">🎁</div>
+    <div class="loot-rarity" id="lootRar">LEGENDARY</div>
+    <div class="loot-name" id="lootNm">Infernal Sword of Power</div>
+    <div class="loot-chips" id="lootChips"></div>
+    <button class="btn btn-p" onclick="closeLoot()">Add to Inventory</button>
+  </div>
+</div>
+
+<!-- LEVEL UP MODAL -->
+<div class="overlay" id="lvlOverlay">
+  <div class="lvlup-modal">
+    <div style="font-size:3rem;margin-bottom:8px">⬆️</div>
+    <div style="font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#c026d3,#7c3aed,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px">Level Up!</div>
+    <div style="color:var(--muted);font-size:.88rem;margin-bottom:20px" id="lvlSub">You are now Level 2</div>
+    <button class="btn btn-p" onclick="closeOverlay('lvlOverlay')">Let's go!</button>
+  </div>
+</div>
+
+<div class="toast-box" id="toastBox"></div>
+
+<script>
+// ═══════════════════════ CONSTANTS ═══════════════════════════════════
+
+const KEY = 'hq_rpg_v3';
+
+const RARITIES = ['common','uncommon','rare','epic','legendary'];
+const RCOL = {common:'#9d9d9d',uncommon:'#1eff00',rare:'#0070dd',epic:'#a335ee',legendary:'#ff8000'};
+const RLBL = {common:'Common',uncommon:'Uncommon',rare:'Rare',epic:'Epic',legendary:'Legendary'};
+const RWTS = {common:55,uncommon:25,rare:13,epic:6,legendary:1};
+// STR = raw power (epic/legendary odds), DEX = precision (rare/epic odds), WIS = knowledge (uncommon+ odds)
+// Per stat range per rarity; combined total drives raid loot % boost (max ~15% at full legendary)
+const RSTR = {common:[1,3],uncommon:[3,6],rare:[6,11],epic:[11,18],legendary:[18,30]};
+const RDEX = {common:[1,3],uncommon:[3,6],rare:[6,11],epic:[11,18],legendary:[18,30]};
+const RWIS = {common:[1,3],uncommon:[3,6],rare:[6,11],epic:[11,18],legendary:[18,30]};
+const RPRC = {common:35,uncommon:90,rare:220,epic:700,legendary:2200};
+
+const SLOTS = ['head','cape','amulet','weapon','body','shield','legs','gloves','boots','ring'];
+const SLBL  = {head:'Head',cape:'Cape',amulet:'Amulet',weapon:'Weapon',body:'Body',shield:'Shield',legs:'Legs',gloves:'Gloves',boots:'Boots',ring:'Ring'};
+const SICO  = {head:'⛑️',cape:'🧣',amulet:'📿',weapon:'⚔️',body:'👕',shield:'🛡️',legs:'👖',gloves:'🥊',boots:'👟',ring:'💍'};
+
+const PREFIXES = {
+  common:['Worn','Rusty','Cracked','Old','Bronze','Iron'],
+  uncommon:['Steel','Mithril','Adamant','Studded','Hardened'],
+  rare:['Rune','Dragon','Blessed','Enchanted','Crystal'],
+  epic:['Barrows','Voidwaker','Ancient','Abyssal'],
+  legendary:['Infernal','Twisted','Zenyte','Corrupted','Elder']
+};
+const ITYPE = {
+  head:['Helm','Full Helm','Coif','Visor','Cowl'],
+  cape:['Cape','Cloak','Mantle','Shroud'],
+  amulet:['Amulet','Necklace','Pendant','Torque','Talisman'],
+  weapon:['Sword','Scimitar','Longsword','Staff','Bow','Dagger','Warhammer','Battleaxe'],
+  body:['Platebody','Chainbody','Chestplate','Robe Top','Tunic'],
+  shield:['Shield','Kiteshield','Ward','Orb','Defender'],
+  legs:['Platelegs','Greaves','Robe Bottom','Shorts','Plateskirt'],
+  gloves:['Gauntlets','Gloves','Vambraces','Grips'],
+  boots:['Boots','Sandals','Greaves','Treads','Sabatons'],
+  ring:['Ring','Band','Signet','Berserker Ring','Onyx Ring']
+};
+const SFXPOOL = ['','','','of Focus','of Endurance','of Power','of the Berserker','of Fortune','of Discipline','of the Guardian'];
+
+const LEVEL_TITLES = ['Peasant','Farmer','Villager','Squire','Scout','Soldier','Guard','Archer','Mage','Knight','Hero','Champion','Ranger','Rogue','Paladin','Warlord','Archmage','Shadowblade','Dragonknight','Legend'];
+
+const LEVELS = Array.from({length:20},(_,i)=>({
+  level:i+1, title:LEVEL_TITLES[i]||'Legend',
+  xpReq:Math.floor(100*Math.pow(1.35,i))
+}));
+
+// Economy designed for 100s of days of play.
+// Farm: accessible in first week. Mill: weeks-months. Tavern: months. Guild/Kingdom: 6mo–2yrs.
+const UPGRADES = [
+  {id:'farm',   icon:'🌾',name:'Hire a Farmer',  desc:'+3 gold/hr',    gph:3,  max:5,cost:80,    mult:2.3},
+  {id:'mill',   icon:'⚙️',name:'Build a Mill',   desc:'+8 gold/hr',    gph:8,  max:5,cost:500,   mult:2.8},
+  {id:'tavern', icon:'🍺',name:'Open a Tavern',  desc:'+20 gold/hr',   gph:20, max:3,cost:4000,  mult:3.5},
+  {id:'guild',  icon:'🏛️',name:'Found a Guild',  desc:'+50 gold/hr',   gph:50, max:3,cost:20000, mult:4.0},
+  {id:'kingdom',icon:'👑',name:'Rule a Kingdom', desc:'+120 gold/hr',  gph:120,max:2,cost:100000,mult:4.5},
+  {id:'vault',  icon:'🏦',name:'Gold Vault',      desc:'+24hr gold cap',gph:0,  max:3,cost:300,   mult:3.5,special:'cap'},
+];
+
+const RAIDS = [
+  {id:'r1', icon:'🛏️',name:'The Great Bedroom Raid',  desc:'Tidy your bedroom — make the bed, clear the floor, banish the chaos.',diff:1},
+  {id:'r2', icon:'🍳',name:'Kitchen Crusade',          desc:'Cook a proper meal from scratch. No microwave allowed.',diff:2},
+  {id:'r3', icon:'🏋️',name:'The Iron Trial',           desc:'Complete a full 30-minute workout. No excuses.',diff:2},
+  {id:'r4', icon:'📚',name:'Scroll of Knowledge',      desc:'Read for 2 uninterrupted hours. Focus, no phone.',diff:1},
+  {id:'r5', icon:'🧹',name:'Fortress Purge',           desc:'Deep clean the kitchen — every surface, every corner.',diff:3},
+  {id:'r6', icon:'🚶',name:'Path of Endurance',        desc:'Walk or run 5km. Get outside and move.',diff:2},
+  {id:'r7', icon:'🗂️',name:'The Desk Dungeon',         desc:'Organise your workspace completely. File everything.',diff:1},
+  {id:'r8', icon:'🥗',name:'Meal Prep Mandate',        desc:'Prep healthy meals for the whole week.',diff:3},
+  {id:'r9', icon:'👕',name:'Laundry Legion',           desc:'Wash, dry, fold, and put away all laundry.',diff:1},
+  {id:'r10',icon:'📞',name:'The Social Quest',         desc:"Call a family member or old friend you've been meaning to catch up with.",diff:1},
+  {id:'r11',icon:'🚿',name:'Bathroom Blitz',           desc:'Deep clean the entire bathroom. Scrub everything.',diff:2},
+  {id:'r12',icon:'🌿',name:'Garden Guardian',          desc:'Spend an hour tending to plants, a garden, or outdoor space.',diff:2},
+];
+
+const EMOJIS = ['🏃','💪','📚','🧘','💧','🥗','😴','🎸','✏️','🧹','🏋️','🚴','🎯','🌿','🧠','💊','🎮','🧽','🐕','🎨','🏊','🍎'];
+const RITUAL_EMOJIS = ['🕯️','🌙','🔮','📿','🌑','⭐','⚗️','🌿','🪄','🗡️','📖','🌒','🩸','🪬','🌚','☽','🦇','🌫️','💀','🕰️','🌀','🔯'];
+
+// ═══════════════════════ STATE ════════════════════════════════════════
+
+function defaults(){
+  return {
+    totalXP:0, gold:0, pendingGold:0, lastGoldTick:Date.now(), goldVersion:2, pendingRitualLoot:null,
+    rituals:[
+      {id:'rit1',name:'30 minutes cleaning',     icon:'🧹',completions:{},lootChance:45},
+      {id:'rit2',name:'5 minutes of cold water', icon:'🚿',completions:{},lootChance:38},
+      {id:'rit3',name:'Write in your journal',   icon:'📖',completions:{},lootChance:32},
+    ],
+    habits:[
+      {id:'h1',name:'Morning stretch',icon:'🧘',baseXP:15,completions:{}},
+      {id:'h2',name:'Read 20 minutes', icon:'📚',baseXP:20,completions:{}},
+      {id:'h3',name:'Drink 1 litre',    icon:'💧',baseXP:10,completions:{}},
+      {id:'h4',name:'20 pullups',       icon:'💪',baseXP:30,completions:{}},
+    ],
+    equipped:{head:null,cape:null,amulet:null,weapon:null,body:null,shield:null,legs:null,gloves:null,boots:null,ring:null},
+    inventory:[],
+    shopItems:[], shopLastRefresh:'',
+    upgrades:{},
+    raidKey:'', raidId:'', raidDone:false, raidHistory:[],
+    pendingLoot:null,
+  };
+}
+
+let S = (()=>{
+  try{
+    const saved = JSON.parse(localStorage.getItem(KEY));
+    if(!saved) return defaults();
+    const d = defaults();
+    return {
+      ...d,...saved,
+      equipped:{...d.equipped,...(saved.equipped||{})},
+      upgrades:{...(saved.upgrades||{})},
+      inventory:saved.inventory||[],
+      shopItems:saved.shopItems||[],
+      raidHistory:saved.raidHistory||[],
+      habits:saved.habits||d.habits,
+    };
+  }catch{return defaults();}
+})();
+
+function save(){ S.lastGoldTick=Date.now(); localStorage.setItem(KEY,JSON.stringify(S)); }
+
+// Migrate items from old stat format (xpBonus/streakShields) to new (str/dex/wis)
+function migrateItem(item){
+  if(!item||item.str!==undefined) return item;
+  const r=item.rarity||'common';
+  const[sMin,sMax]=RSTR[r],[dMin,dMax]=RDEX[r],[wMin,wMax]=RWIS[r];
+  item.str=rnd(sMin,sMax); item.dex=rnd(dMin,dMax); item.wis=rnd(wMin,wMax);
+  delete item.xpBonus; delete item.streakShields;
+  return item;
+}
+S.inventory.forEach(migrateItem);
+Object.keys(S.equipped).forEach(slot=>{ if(S.equipped[slot]) migrateItem(S.equipped[slot]); });
+// Force shop to regenerate if any items are still in old format
+if(S.shopItems.some(i=>i.str===undefined)) S.shopLastRefresh='';
+// Migrate pendingGold from gold units to silver units (×100)
+if(!S.goldVersion||S.goldVersion<2){ S.pendingGold=Math.floor((S.pendingGold||0)*100); S.goldVersion=2; }
+
+// ═══════════════════════ HELPERS ═════════════════════════════════════
+
+const today=()=>new Date().toISOString().slice(0,10);
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const uid=()=>'i'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+
+function weekKey(){
+  const d=new Date(), j=new Date(d.getFullYear(),0,1);
+  return `${d.getFullYear()}-W${Math.ceil(((d-j)/864e5+j.getDay()+1)/7)}`;
+}
+
+function getLvlInfo(){
+  let xp=S.totalXP,cum=0;
+  for(let i=0;i<LEVELS.length;i++){
+    const l=LEVELS[i];
+    if(xp<cum+l.xpReq||i===LEVELS.length-1){
+      const xpIn=xp-cum;
+      return{lvl:l,xpIn,xpFor:l.xpReq,prog:Math.min(100,xpIn/l.xpReq*100),idx:i};
+    }
+    cum+=l.xpReq;
+  }
+}
+
+function getGph(){
+  let r=5;
+  UPGRADES.forEach(u=>{
+    if(u.special==='cap') return;
+    r+=u.gph*(S.upgrades[u.id]||0);
+  });
+  return r;
+}
+
+function getCap(){
+  let c=24;
+  const vl=S.upgrades['vault']||0;
+  c+=vl*24;
+  return c;
+}
+
+function getRaidStats(){
+  let str=0,dex=0,wis=0;
+  Object.values(S.equipped).forEach(i=>{if(i){str+=i.str||0;dex+=i.dex||0;wis+=i.wis||0;}});
+  return {str,dex,wis,total:str+dex+wis};
+}
+
+// Returns % loot quality boost (0–15). Each stat contributes differently:
+// STR boosts epic/legendary weight, DEX boosts rare/epic, WIS boosts uncommon/rare
+function getRaidBoost(){
+  const{str,dex,wis}=getRaidStats();
+  // Formula: each stat pool caps out around 300 (10 slots × avg24 legendary) = 900 total
+  // Scaled so full legendary gear ≈ +15%
+  const pct=Math.min(15,(str+dex+wis)/60);
+  return Math.round(pct*10)/10; // 1 decimal place
+}
+
+function todayCount(){
+  const t=today();
+  return S.habits.filter(h=>h.completions[t]).length;
+}
+
+function canClaim(){ return todayCount()>=3&&S.pendingGold>=100; }
+
+function getStreak(h){
+  let s=0;
+  const t=today(), td=new Date();
+  const start=h.completions[t]?0:1;
+  for(let i=start;i<365;i++){
+    const d=new Date(td); d.setDate(td.getDate()-i);
+    if(h.completions[d.toISOString().slice(0,10)]) s++;
+    else break;
+  }
+  return s;
+}
+
+// ═══════════════════════ GEAR GEN ════════════════════════════════════
+
+// pct = raid power % (0–15). Each stat type flavours the boost differently:
+// STR nudges toward epic/legendary, DEX toward rare/epic, WIS toward uncommon/rare
+function rollRarity(pct=0,strPct=0,dexPct=0,wisPct=0){
+  const w={...RWTS};
+  if(pct>0){
+    // WIS: lifts uncommon & rare floors
+    w.common  =Math.max(4, w.common   - wisPct*2  - dexPct*1.5 - strPct*1);
+    w.uncommon+=wisPct*2;
+    w.rare    +=wisPct*1  + dexPct*2;
+    w.epic    +=dexPct*1  + strPct*2.5;
+    w.legendary+=strPct*0.8;
+  }
+  let total=Object.values(w).reduce((a,b)=>a+b,0), roll=Math.random()*total;
+  for(const[r,wt] of Object.entries(w)){roll-=wt;if(roll<=0) return r;}
+  return 'common';
+}
+
+function genItem(rarity,slot){
+  if(!slot) slot=SLOTS[Math.floor(Math.random()*SLOTS.length)];
+  const pfx=PREFIXES[rarity][Math.floor(Math.random()*PREFIXES[rarity].length)];
+  const typ=ITYPE[slot][Math.floor(Math.random()*ITYPE[slot].length)];
+  const sfxPool=(rarity==='rare'||rarity==='epic'||rarity==='legendary')
+    ? SFXPOOL.filter(s=>s!=='') : [''];
+  const sfx=sfxPool[Math.floor(Math.random()*sfxPool.length)];
+  const name=sfx?`${pfx} ${typ} ${sfx}`:`${pfx} ${typ}`;
+  const[sMin,sMax]=RSTR[rarity];
+  const[dMin,dMax]=RDEX[rarity];
+  const[wMin,wMax]=RWIS[rarity];
+  return {
+    id:uid(), name, slot, rarity,
+    icon:SICO[slot],
+    str:rnd(sMin,sMax),
+    dex:rnd(dMin,dMax),
+    wis:rnd(wMin,wMax),
+    price:RPRC[rarity]+rnd(-10,10),
+  };
+}
+
+// ═══════════════════════ GOLD TICK ═══════════════════════════════════
+
+function goldTick(){
+  const gph=getGph(), cap=getCap();
+  S.pendingGold=Math.min(cap*gph*100,(S.pendingGold||0)+gph*100/3600);
+  const pg=S.pendingGold, pg_g=Math.floor(pg/100), pg_s=Math.floor(pg%100);
+  document.getElementById('pendG').textContent=pg_g+'g '+String(pg_s).padStart(2,'0')+'s';
+  document.getElementById('claimBtn').disabled=!canClaim();
+  document.getElementById('hGold').textContent=Math.floor(S.gold);
+  document.getElementById('hQuota').textContent=`${todayCount()}/3 today`;
+}
+
+function claimGold(){
+  if(!canClaim()) return;
+  const amt=Math.floor(S.pendingGold/100);
+  S.pendingGold=Math.floor(S.pendingGold%100);
+  S.gold+=amt;
+  save(); updateHeader();
+  toast(`💰 +${amt}g claimed!`,'tg');
+}
+
+// ═══════════════════════ RENDER ══════════════════════════════════════
+
+function render(){ updateHeader(); renderQuests(); renderCharacter(); renderShop(); renderRaids(); renderUpgrades(); }
+
+function updateHeader(){
+  const{lvl,xpIn,xpFor,prog}=getLvlInfo();
+  document.getElementById('hLvl').textContent=`Lv.${lvl.level} ${lvl.title}`;
+  document.getElementById('hXpBar').style.width=prog+'%';
+  document.getElementById('hXpTxt').textContent=`${xpIn}/${xpFor}`;
+  document.getElementById('hGold').textContent=Math.floor(S.gold);
+  document.getElementById('hQuota').textContent=`${todayCount()}/3 today`;
+}
+
+function renderQuests(){
+  const t=today(), done=todayCount();
+  // dots
+  const dots=document.getElementById('qdots'); dots.innerHTML='';
+  const total=Math.max(S.habits.length,3);
+  for(let i=0;i<Math.min(total,10);i++){
+    const d=document.createElement('div');
+    d.className='qdot'+(i<done?(i<3?' done':' bonus'):'');
+    dots.appendChild(d);
+  }
+  document.getElementById('quotaText').innerHTML=done>=3
+    ?`<strong>Daily quota met!</strong> Claim your passive gold 💰`
+    :`Complete <strong>${3-done} more quest${3-done!==1?'s':''}</strong> to unlock today's passive gold`;
+
+  // habits
+  const list=document.getElementById('habitList'); list.innerHTML='';
+  S.habits.forEach(h=>{
+    const isDone=!!h.completions[t], streak=getStreak(h);
+    const el=document.createElement('div');
+    el.className='habit-card'+(isDone?' done':'');
+    el.onclick=()=>toggleHabit(h.id);
+    el.innerHTML=`
+      <button class="habit-del" onclick="event.stopPropagation();deleteHabit('${h.id}')" title="Remove quest">✕</button>
+      <div class="h-icon">${h.icon}</div>
+      <div class="h-info">
+        <div class="h-name">${h.name}</div>
+        <div class="h-meta">
+          <span>+${h.baseXP} XP</span>
+          ${streak>0?`<span class="h-streak">🔥 ${streak}-day streak</span>`:''}
+        </div>
+      </div>
+      <div class="h-check">${isDone?'✓':''}</div>`;
+    list.appendChild(el);
+  });
+
+  // rituals
+  const ritList=document.getElementById('ritualList'); ritList.innerHTML='';
+  (S.rituals||[]).forEach(r=>{
+    const isDone=!!r.completions[t];
+    const el=document.createElement('div');
+    el.className='ritual-card'+(isDone?' done':'');
+    el.onclick=()=>completeRitual(r.id);
+    el.innerHTML=`
+      <button class="ritual-del" onclick="event.stopPropagation();deleteRitual('${r.id}')" title="Remove ritual">✕</button>
+      <div class="ritual-icon">${r.icon}</div>
+      <div class="h-info">
+        <div class="ritual-name">${r.name}</div>
+        <div class="ritual-meta">
+          ${isDone
+            ?`<span>✦ Ritual sealed for today</span>`
+            :`<span>🎲 ${r.lootChance}% loot chance</span><span>· Daily ritual</span>`}
+        </div>
+      </div>
+      <div class="ritual-check">${isDone?'✦':''}</div>`;
+    ritList.appendChild(el);
+  });
+}
+
+function renderCharacter(){
+  // Equipment grid - OSRS layout:
+  // row1: [cape]  [head]   [amulet]
+  // row2: [weapon][🧙]     [shield]
+  // row3: [gloves][body]   [ring]
+  // row4: [empty] [legs]   [empty]
+  // row5: [empty] [boots]  [empty]
+  const layout=[
+    ['cape','head','amulet'],
+    ['weapon','CHAR','shield'],
+    ['gloves','body','ring'],
+    [null,'legs',null],
+    [null,'boots',null],
+  ];
+  const grid=document.getElementById('equipGrid'); grid.innerHTML='';
+  layout.forEach(row=>row.forEach(slot=>{
+    if(slot===null){
+      const e=document.createElement('div');
+      e.style.cssText='width:50px;height:50px;';
+      grid.appendChild(e);
+    } else if(slot==='CHAR'){
+      const e=document.createElement('div');
+      e.style.cssText='width:50px;height:50px;';
+      grid.appendChild(e);
+    } else {
+      const item=S.equipped[slot];
+      const e=document.createElement('div');
+      e.className='eslot'+(item?' filled b'+item.rarity[0]:'');
+      if(item){
+        e.innerHTML=`<div class="si">${item.icon}</div><div class="rdot" style="background:${RCOL[item.rarity]}"></div>`;
+        e.title=`${item.name} (${RLBL[item.rarity]})`;
+        e.onclick=()=>showItem(item,true);
+      } else {
+        e.innerHTML=`<div style="font-size:1.1rem;opacity:.25">${SICO[slot]}</div><div class="slabel">${SLBL[slot]}</div>`;
+      }
+      grid.appendChild(e);
+    }
+  }));
+
+  // Inventory
+  const invGrid=document.getElementById('invGrid');
+  const invEmpty=document.getElementById('invEmpty');
+  document.getElementById('invCnt').textContent=`(${S.inventory.length})`;
+  if(S.inventory.length===0){invGrid.innerHTML='';invEmpty.style.display='block';}
+  else{
+    invEmpty.style.display='none'; invGrid.innerHTML='';
+    S.inventory.forEach(item=>{
+      const e=document.createElement('div');
+      e.className=`inv-item b${item.rarity[0]} bg${item.rarity[0]}`;
+      e.innerHTML=`<span>${item.icon}</span>`;
+      e.title=item.name;
+      e.onclick=()=>showItem(item,false);
+      invGrid.appendChild(e);
+    });
+  }
+
+  // Stats
+  const rs=getRaidStats(), boost=getRaidBoost(), info=getLvlInfo();
+  const boostCol=boost>=12?'var(--legendary)':boost>=8?'var(--epic)':boost>=4?'var(--rare)':'var(--muted)';
+  document.getElementById('charStats').innerHTML=`
+    <div class="stat-row"><span>Level</span><span style="color:var(--accent2)">${info.lvl.level} — ${info.lvl.title}</span></div>
+    <div class="stat-row"><span>Total XP</span><span style="color:var(--accent2)">${S.totalXP}</span></div>
+    <div class="stat-row"><span>⚔️ Strength</span><span style="color:#ef4444">${rs.str}</span></div>
+    <div class="stat-row"><span>🏹 Dexterity</span><span style="color:#10b981">${rs.dex}</span></div>
+    <div class="stat-row"><span>🧠 Wisdom</span><span style="color:#60b4ff">${rs.wis}</span></div>
+    <div class="stat-row"><span>🎯 Raid Power</span><span style="color:${boostCol};font-weight:700">+${boost}% loot quality</span></div>
+    <div class="stat-row"><span>Gold / Hour</span><span style="color:var(--gold)">${getGph()} 💰</span></div>
+    <div class="stat-row"><span>Gold Cap</span><span style="color:var(--gold)">${getCap()}h storage</span></div>
+    <div class="stat-row"><span>Equipped</span><span>${Object.values(S.equipped).filter(Boolean).length}/10 slots</span></div>`;
+}
+
+function renderShop(){
+  ensureShop();
+  const grid=document.getElementById('shopGrid'); grid.innerHTML='';
+  (S.shopItems||[]).forEach((item,idx)=>{
+    const can=S.gold>=item.shopPrice;
+    const e=document.createElement('div');
+    e.className=`shop-card b${item.rarity[0]}`;
+    e.innerHTML=`
+      <div class="sc-top">
+        <div class="sc-icon b${item.rarity[0]}">${item.icon}</div>
+        <div>
+          <div class="sc-name">${item.name}</div>
+          <div class="sc-rar" style="color:${RCOL[item.rarity]}">${RLBL[item.rarity]} · ${SLBL[item.slot]}</div>
+        </div>
+      </div>
+      <div class="sc-stats">
+        <div>⚔️ STR +${item.str} &nbsp; 🏹 DEX +${item.dex} &nbsp; 🧠 WIS +${item.wis}</div>
+      </div>
+      <div class="sc-foot">
+        <div class="price">💰 ${item.shopPrice}</div>
+        <button class="btn btn-g btn-sm" onclick="buyShopItem(${idx})" ${can?'':'disabled'}>Buy</button>
+      </div>`;
+    grid.appendChild(e);
+  });
+
+  // Chests
+  document.getElementById('chestsGrid').innerHTML=`
+    <div class="chest-card">
+      <div style="font-size:2rem;margin-bottom:6px">📦</div>
+      <div style="font-weight:600;font-size:.82rem;margin-bottom:3px">Basic Chest</div>
+      <div style="color:var(--muted);font-size:.72rem;margin-bottom:9px">Common–Uncommon</div>
+      <button class="btn btn-g btn-sm" onclick="openChest('basic')" ${S.gold>=50?'':'disabled'}>50 💰</button>
+    </div>
+    <div class="chest-card" style="border-color:var(--rare)">
+      <div style="font-size:2rem;margin-bottom:6px">💎</div>
+      <div style="font-weight:600;font-size:.82rem;margin-bottom:3px">Rare Chest</div>
+      <div style="color:var(--muted);font-size:.72rem;margin-bottom:9px">Uncommon–Epic</div>
+      <button class="btn btn-g btn-sm" onclick="openChest('rare')" ${S.gold>=200?'':'disabled'}>200 💰</button>
+    </div>
+    <div class="chest-card" style="border-color:var(--legendary)">
+      <div style="font-size:2rem;margin-bottom:6px">👑</div>
+      <div style="font-weight:600;font-size:.82rem;margin-bottom:3px">Epic Chest</div>
+      <div style="color:var(--muted);font-size:.72rem;margin-bottom:9px">Rare–Legendary</div>
+      <button class="btn btn-g btn-sm" onclick="openChest('epic')" ${S.gold>=600?'':'disabled'}>600 💰</button>
+    </div>`;
+}
+
+function renderRaids(){
+  ensureRaid();
+  const raid=RAIDS.find(r=>r.id===S.raidId)||RAIDS[0];
+  const done=S.raidDone;
+  const boost=getRaidBoost();
+  const rs=getRaidStats();
+  const diffStars='⭐'.repeat(raid.diff);
+  const diffCol=['','#9d9d9d','#10b981','#0070dd','#a335ee'][raid.diff];
+  const boostCol=boost>=12?'var(--legendary)':boost>=8?'var(--epic)':boost>=4?'var(--rare)':'var(--muted)';
+
+  document.getElementById('raidMain').innerHTML=`
+    <div class="raid-card">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+        <span style="background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:3px 10px;font-size:.72rem;color:var(--muted)">${S.raidKey}</span>
+        <span style="font-size:.72rem;color:${diffCol}">Difficulty ${diffStars}</span>
+      </div>
+      <div class="raid-icon">${raid.icon}</div>
+      <div class="raid-title">${raid.name}</div>
+      <div class="raid-desc">${raid.desc}</div>
+      <div class="raid-chips">
+        <div class="raid-chip">💰 +${raid.diff*50} gold bonus</div>
+        <div class="raid-chip">🎁 Random loot drop</div>
+        <div class="raid-chip" style="border-color:${boostCol};color:${boostCol}">🎯 Raid Power: +${boost}% loot quality</div>
+      </div>
+      <div style="display:flex;justify-content:center;gap:16px;margin-bottom:14px;font-size:.8rem;">
+        <span style="color:#ef4444">⚔️ STR ${rs.str}</span>
+        <span style="color:#10b981">🏹 DEX ${rs.dex}</span>
+        <span style="color:#60b4ff">🧠 WIS ${rs.wis}</span>
+      </div>
+      ${done
+        ? `<div style="background:#0f1f0f;border:1px solid var(--green);border-radius:10px;padding:12px;color:var(--green);font-weight:600">✅ Completed this week! New raid arrives next week.</div>`
+        : `<button class="btn btn-p" style="width:100%;padding:12px;font-size:.95rem" onclick="completeRaid()">⚔️ Mark Raid Complete</button>
+           <div style="margin-top:9px;color:var(--muted);font-size:.74rem">Equip better gear to boost your STR/DEX/WIS and earn rarer loot</div>`
+      }
+    </div>`;
+
+  const hist=document.getElementById('raidHist');
+  const histEmpty=document.getElementById('raidHistEmpty');
+  if(!S.raidHistory.length){hist.innerHTML='';histEmpty.style.display='block';}
+  else{
+    histEmpty.style.display='none';
+    hist.innerHTML=S.raidHistory.slice(0,6).map(r=>`
+      <div class="hist-item">
+        <span style="font-size:1.3rem">${r.rIcon}</span>
+        <div style="flex:1"><div style="font-weight:600">${r.rName}</div><div style="color:var(--muted);font-size:.72rem">${r.date} · ${r.week}</div></div>
+        <div style="text-align:right">
+          <div style="color:${RCOL[r.item.rarity]};font-weight:700;font-size:.78rem">${RLBL[r.item.rarity]}</div>
+          <div style="color:var(--muted);font-size:.72rem">${r.item.name}</div>
+        </div>
+      </div>`).join('');
+  }
+}
+
+function renderUpgrades(){
+  const gph=getGph();
+  let html=`<div class="card" style="border-color:var(--gold);margin-bottom:4px;display:flex;align-items:center;gap:9px">
+    <span style="font-size:1.2rem">⏱️</span>
+    <span style="color:var(--gold);font-weight:700">${gph}g/hr</span>
+    <span style="color:var(--muted);font-size:.78rem">· cap: ${getCap()}h</span>
+  </div>`;
+  UPGRADES.forEach(u=>{
+    const lvl=S.upgrades[u.id]||0, maxed=lvl>=u.max;
+    const cost=maxed?0:Math.floor(u.cost*Math.pow(u.mult,lvl));
+    const can=S.gold>=cost&&!maxed;
+    html+=`<div class="upg-row${maxed?' maxed':''}">
+      <div class="upg-icon">${u.icon}</div>
+      <div class="upg-info">
+        <div class="upg-name">${u.name}</div>
+        <div class="upg-desc">${u.desc}</div>
+        <div class="upg-lvl">Level ${lvl}/${u.max}</div>
+      </div>
+      ${maxed?`<span style="color:var(--gold);font-size:.78rem;font-weight:700">MAXED</span>`
+              :`<button class="btn btn-g btn-sm" onclick="buyUpgrade('${u.id}')" ${can?'':'disabled'}>${cost} 💰</button>`}
+    </div>`;
+  });
+  document.getElementById('upgGrid').innerHTML=html;
+}
+
+// ═══════════════════════ ACTIONS ═════════════════════════════════════
+
+function toggleHabit(id){
+  const t=today(), h=S.habits.find(x=>x.id===id); if(!h) return;
+  if(h.completions[t]){
+    h.completions[t]=false;
+    S.totalXP=Math.max(0,S.totalXP-h.baseXP);
+    save(); render(); return;
+  }
+  h.completions[t]=true;
+  const prev=getLvlInfo();
+  S.totalXP+=h.baseXP;
+  const nw=getLvlInfo();
+  toast(`+${h.baseXP} XP — ${h.name}`,'tx');
+  if(nw.lvl.level>prev.lvl.level) setTimeout(()=>showLevelUp(nw.lvl.level,nw.lvl.title),400);
+  if(todayCount()===3) toast('🔓 3 quests done! Claim your passive gold!','tg');
+  save(); render();
+}
+
+let selEmoji='🎯';
+function addHabit(){
+  const name=document.getElementById('hName').value.trim();
+  const xp=parseInt(document.getElementById('hXP').value)||20;
+  if(!name) return;
+  S.habits.push({id:'h'+Date.now(),name,icon:selEmoji,baseXP:Math.max(5,Math.min(100,xp)),completions:{}});
+  document.getElementById('hName').value='';
+  document.getElementById('addForm').classList.remove('show');
+  save(); render();
+}
+function deleteHabit(id){
+  S.habits=S.habits.filter(h=>h.id!==id);
+  save(); render();
+}
+function toggleAddForm(){
+  document.getElementById('addForm').classList.toggle('show');
+  document.getElementById('ritualForm').classList.remove('show');
+}
+
+// ──────────── RITUALS ────────────
+function completeRitual(id){
+  const t=today();
+  const r=(S.rituals||[]).find(x=>x.id===id); if(!r) return;
+  if(r.completions[t]){ toast('✦ This ritual is already sealed for today.',''); return; }
+  r.completions[t]=true;
+  S.totalXP+=25;
+  save(); render();
+  if(Math.random()*100 < r.lootChance){
+    const rs=getRaidStats();
+    const scaledStr=Math.min(3,rs.str/90*3);
+    const scaledDex=Math.min(3,rs.dex/90*3);
+    const scaledWis=Math.min(3,rs.wis/90*3);
+    const rarity=rollRarity(0,scaledStr,scaledDex,scaledWis);
+    const item=genItem(rarity);
+    S.pendingRitualLoot=item; save();
+    setTimeout(()=>showLootReveal(item,false,'ritual'),600);
+  } else {
+    toast('✦ Ritual complete — +25 XP','tx');
+  }
+}
+
+let selRitualEmoji='🕯️';
+function addRitual(){
+  const name=document.getElementById('ritualName').value.trim();
+  if(!name) return;
+  if(!S.rituals) S.rituals=[];
+  S.rituals.push({id:'rit'+Date.now(),name,icon:selRitualEmoji,completions:{},lootChance:35});
+  document.getElementById('ritualName').value='';
+  document.getElementById('ritualForm').classList.remove('show');
+  save(); render();
+}
+function toggleRitualForm(){
+  document.getElementById('ritualForm').classList.toggle('show');
+  document.getElementById('addForm').classList.remove('show');
+}
+function deleteRitual(id){
+  S.rituals=(S.rituals||[]).filter(r=>r.id!==id);
+  save(); render();
+}
+
+function ensureShop(){
+  const t=today();
+  if(S.shopLastRefresh===t&&S.shopItems.length>0) return;
+  S.shopItems=Array.from({length:6},()=>{
+    const lvlBoost=Math.floor(getLvlInfo().lvl.level/4);
+    const r=rollRarity(lvlBoost*3,lvlBoost,lvlBoost,lvlBoost);
+    return{...genItem(r),shopPrice:Math.floor(RPRC[r]*(0.8+Math.random()*.4))};
+  });
+  S.shopLastRefresh=t; save();
+}
+
+function shopRefresh(paid){
+  if(paid){ if(S.gold<50){toast('❌ Need 50 gold','');return;} S.gold-=50; }
+  S.shopLastRefresh=''; ensureShop(); renderShop(); updateHeader();
+}
+
+function buyShopItem(idx){
+  const item=S.shopItems[idx]; if(!item) return;
+  if(S.gold<item.shopPrice){toast('❌ Not enough gold!','');return;}
+  S.gold-=item.shopPrice;
+  S.inventory.push({...item});
+  S.shopItems.splice(idx,1);
+  save(); renderShop(); renderCharacter(); updateHeader();
+  toast(`✅ Bought ${item.name}!`,'tx');
+}
+
+function openChest(type){
+  const prices={basic:50,rare:200,epic:600};
+  // Chests use flat boosts distributed evenly across STR/DEX/WIS
+  const bv={basic:0,rare:2,epic:4};
+  if(S.gold<prices[type]){toast('❌ Not enough gold!','');return;}
+  S.gold-=prices[type];
+  const b=bv[type];
+  const r=rollRarity(b*3,b,b,b);
+  const item=genItem(r);
+  S.inventory.push(item);
+  save(); showLootReveal(item,false); renderCharacter(); updateHeader();
+}
+
+function equipItem(itemId){
+  const item=S.inventory.find(i=>i.id===itemId); if(!item) return;
+  if(S.equipped[item.slot]) S.inventory.push({...S.equipped[item.slot]});
+  S.equipped[item.slot]={...item};
+  S.inventory=S.inventory.filter(i=>i.id!==itemId);
+  save(); closeOverlay('itemOverlay'); renderCharacter();
+  toast(`⚔️ Equipped ${item.name}!`,'');
+}
+
+function unequipItem(slot){
+  const item=S.equipped[slot]; if(!item) return;
+  S.inventory.push({...item}); S.equipped[slot]=null;
+  save(); closeOverlay('itemOverlay'); renderCharacter();
+  toast(`Unequipped ${item.name}`,'');
+}
+
+function showItem(item,fromSlot){
+  document.getElementById('mIcon').textContent=item.icon;
+  document.getElementById('mIcon').className=`m-icon b${item.rarity[0]}`;
+  document.getElementById('mName').textContent=item.name;
+  const mr=document.getElementById('mRarity');
+  mr.textContent=RLBL[item.rarity]; mr.style.color=RCOL[item.rarity];
+  document.getElementById('mSlot').textContent=SLBL[item.slot]+' Slot';
+  const cur=S.equipped[item.slot];
+  // Helper: render a coloured delta badge without semicolons inside ${}
+  function delta(v){
+    if(v===null) return '';
+    const col=v>0?'#10b981':v<0?'#ef4444':'#64748b';
+    const sign=v>0?'+':'';
+    return '<span style="color:'+col+';font-size:.7rem"> ('+sign+v+')</span>';
+  }
+  const cmpStr=cur&&!fromSlot?item.str-cur.str:null;
+  const cmpDex=cur&&!fromSlot?item.dex-cur.dex:null;
+  const cmpWis=cur&&!fromSlot?item.wis-cur.wis:null;
+  document.getElementById('mStats').innerHTML=`
+    <div class="m-stat"><span>⚔️ Strength</span><span style="color:#ef4444">+${item.str}${delta(cmpStr)}</span></div>
+    <div class="m-stat"><span>🏹 Dexterity</span><span style="color:#10b981">+${item.dex}${delta(cmpDex)}</span></div>
+    <div class="m-stat"><span>🧠 Wisdom</span><span style="color:#60b4ff">+${item.wis}${delta(cmpWis)}</span></div>
+    <div class="m-stat"><span>Slot</span><span style="color:var(--muted)">${SLBL[item.slot]}</span></div>
+    ${cur&&!fromSlot?`<div class="m-stat"><span>Replaces</span><span style="color:var(--muted);font-size:.76rem">${cur.name}</span></div>`:''}`;
+  document.getElementById('mActs').innerHTML=fromSlot
+    ? `<button class="btn btn-ghost" onclick="unequipItem('${item.slot}')">Unequip</button><button class="btn btn-ghost" onclick="closeOverlay('itemOverlay')">Close</button>`
+    : `<button class="btn btn-p" onclick="equipItem('${item.id}')">Equip</button><button class="btn btn-ghost" onclick="closeOverlay('itemOverlay')">Close</button>`;
+  document.getElementById('itemOverlay').classList.add('show');
+}
+
+function buyUpgrade(id){
+  const u=UPGRADES.find(x=>x.id===id); if(!u) return;
+  const lvl=S.upgrades[id]||0;
+  if(lvl>=u.max) return;
+  const cost=Math.floor(u.cost*Math.pow(u.mult,lvl));
+  if(S.gold<cost){toast('❌ Not enough gold!','');return;}
+  S.gold-=cost; S.upgrades[id]=lvl+1;
+  save(); updateHeader(); renderUpgrades();
+  toast(`✅ ${u.name} upgraded to Lv.${lvl+1}!`,'tx');
+}
+
+function ensureRaid(){
+  const wk=weekKey();
+  if(S.raidKey!==wk){
+    const idx=parseInt(wk.split('-W')[1])%RAIDS.length;
+    S.raidKey=wk; S.raidId=RAIDS[idx].id; S.raidDone=false; save();
+  }
+}
+
+function completeRaid(){
+  if(S.raidDone) return;
+  const raid=RAIDS.find(r=>r.id===S.raidId)||RAIDS[0];
+  const eqCount=Object.values(S.equipped).filter(Boolean).length;
+  const avgR=Object.values(S.equipped).filter(Boolean)
+    .reduce((a,i)=>a+['common','uncommon','rare','epic','legendary'].indexOf(i.rarity),0)
+    /Math.max(1,eqCount);
+  const boost=getRaidBoost();
+  const rs=getRaidStats();
+  // Difficulty adds a flat bonus; each stat drives a different part of the rarity table
+  const scaledStr=Math.min(5, rs.str/60*5 + raid.diff*0.5);
+  const scaledDex=Math.min(5, rs.dex/60*5 + raid.diff*0.3);
+  const scaledWis=Math.min(5, rs.wis/60*5 + raid.diff*0.2);
+  const rarity=rollRarity(boost, scaledStr, scaledDex, scaledWis);
+  const item=genItem(rarity);
+  S.raidDone=true; S.pendingLoot=item;
+  const goldBonus=raid.diff*50; S.gold+=goldBonus;
+  S.raidHistory.unshift({rIcon:raid.icon,rName:raid.name,item:{...item},date:today(),week:S.raidKey});
+  if(S.raidHistory.length>20) S.raidHistory.pop();
+  save(); showLootReveal(item,true); render();
+}
+
+function showLootReveal(item,fromRaid,source){
+  document.getElementById('lootSource').textContent=source==='ritual'?'✦ The ritual bore fruit...':'⚡ Raid Complete!';
+  document.getElementById('lootIcon').textContent=item.icon;
+  const lr=document.getElementById('lootRar');
+  lr.textContent=RLBL[item.rarity].toUpperCase(); lr.style.color=RCOL[item.rarity];
+  document.getElementById('lootNm').textContent=item.name;
+  document.getElementById('lootChips').innerHTML=`
+    <div class="loot-chip">⚔️ STR +${item.str}</div>
+    <div class="loot-chip">🏹 DEX +${item.dex}</div>
+    <div class="loot-chip">🧠 WIS +${item.wis}</div>`;
+  document.getElementById('lootOverlay').classList.add('show');
+}
+
+function closeLoot(){
+  const loot=S.pendingLoot||S.pendingRitualLoot;
+  if(loot){
+    S.inventory.push({...loot});
+    S.pendingLoot=null; S.pendingRitualLoot=null;
+    save(); renderCharacter();
+  }
+  closeOverlay('lootOverlay');
+}
+
+function showLevelUp(level,title){
+  document.getElementById('lvlSub').textContent=`You are now Level ${level} — ${title}!`;
+  document.getElementById('lvlOverlay').classList.add('show');
+}
+
+// ═══════════════════════ UI HELPERS ══════════════════════════════════
+
+function goTab(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
+
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click',e=>{
+    if(e.target===o){
+      if(o.id==='lootOverlay') closeLoot();
+      else closeOverlay(o.id);
+    }
+  });
+});
+
+function toast(msg,cls){
+  const box=document.getElementById('toastBox');
+  const t=document.createElement('div');
+  t.className='toast '+(cls||''); t.textContent=msg;
+  box.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+
+// ═══════════════════════ INIT ═════════════════════════════════════════
+
+// Quest emoji picker
+const ep=document.getElementById('ePicker');
+EMOJIS.forEach(e=>{
+  const b=document.createElement('div');
+  b.className='eo'+(e===selEmoji?' sel':'');
+  b.textContent=e;
+  b.onclick=()=>{ selEmoji=e; ep.querySelectorAll('.eo').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); };
+  ep.appendChild(b);
+});
+
+// Ritual emoji picker
+const rep=document.getElementById('ritualEPicker');
+RITUAL_EMOJIS.forEach(e=>{
+  const b=document.createElement('div');
+  b.className='eo'+(e===selRitualEmoji?' sel':'');
+  b.textContent=e;
+  b.onclick=()=>{ selRitualEmoji=e; rep.querySelectorAll('.eo').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); };
+  rep.appendChild(b);
+});
+
+// Catch up on offline gold
+(()=>{
+  const elapsed=(Date.now()-S.lastGoldTick)/3600000;
+  const cap=getCap(), gph=getGph();
+  S.pendingGold=Math.min(cap*gph*100,(S.pendingGold||0)+elapsed*gph*100);
+})();
+
+ensureRaid();
+render();
+
+// Gold tick every second
+setInterval(goldTick,1000);
+// Save every 30s
+setInterval(save,30000);
+</script>
+</body>
+</html>
