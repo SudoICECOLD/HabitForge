@@ -486,18 +486,19 @@ const UPGRADES = [
 ];
 
 const RAIDS = [
-  {id:'r1', icon:'🛏️',name:'The Great Bedroom Raid',  desc:'Tidy your bedroom — make the bed, clear the floor, banish the chaos.',diff:1},
-  {id:'r2', icon:'🍳',name:'Kitchen Crusade',          desc:'Cook a proper meal from scratch. No microwave allowed.',diff:2},
-  {id:'r3', icon:'🏋️',name:'The Iron Trial',           desc:'Complete a full 30-minute workout. No excuses.',diff:2},
-  {id:'r4', icon:'📚',name:'Scroll of Knowledge',      desc:'Read for 2 uninterrupted hours. Focus, no phone.',diff:1},
-  {id:'r5', icon:'🧹',name:'Fortress Purge',           desc:'Deep clean the kitchen — every surface, every corner.',diff:3},
-  {id:'r6', icon:'🚶',name:'Path of Endurance',        desc:'Walk or run 5km. Get outside and move.',diff:2},
-  {id:'r7', icon:'🗂️',name:'The Desk Dungeon',         desc:'Organise your workspace completely. File everything.',diff:1},
-  {id:'r8', icon:'🥗',name:'Meal Prep Mandate',        desc:'Prep healthy meals for the whole week.',diff:3},
-  {id:'r9', icon:'👕',name:'Laundry Legion',           desc:'Wash, dry, fold, and put away all laundry.',diff:1},
-  {id:'r10',icon:'📞',name:'The Social Quest',         desc:"Call a family member or old friend you've been meaning to catch up with.",diff:1},
-  {id:'r11',icon:'🚿',name:'Bathroom Blitz',           desc:'Deep clean the entire bathroom. Scrub everything.',diff:2},
-  {id:'r12',icon:'🌿',name:'Garden Guardian',          desc:'Spend an hour tending to plants, a garden, or outdoor space.',diff:2},
+  {id:'r1', icon:'🛏️',name:'The Great Bedroom Raid',  area:'Duvet Dungeon',        desc:'Tidy your bedroom — make the bed, clear the floor, banish the chaos.',diff:1},
+  {id:'r2', icon:'🍳',name:'Kitchen Crusade',          area:'The Grease Pits',      desc:'Cook a proper meal from scratch. No microwave allowed.',diff:2},
+  {id:'r3', icon:'🏋️',name:'The Iron Trial',           area:"Valdur's Sanctum",     desc:'Complete a full 30-minute workout. No excuses.',diff:2},
+  {id:'r4', icon:'📚',name:'Scroll of Knowledge',      area:'The Codex Vaults',     desc:'Read for 2 uninterrupted hours. Focus, no phone.',diff:1},
+  {id:'r5', icon:'🧹',name:'Fortress Purge',           area:'Crust Citadel',        desc:'Deep clean the kitchen — every surface, every corner.',diff:3},
+  {id:'r6', icon:'🚶',name:'Path of Endurance',        area:'Blistering Barrens',   desc:'Walk or run 5km. Get outside and move.',diff:2},
+  {id:'r7', icon:'🗂️',name:'The Desk Dungeon',         area:"Korreth's Catacombs",  desc:'Organise your workspace completely. File everything.',diff:1},
+  {id:'r8', icon:'🥗',name:'Meal Prep Mandate',        area:'Tupperware Tombs',     desc:'Prep healthy meals for the whole week.',diff:3},
+  {id:'r9', icon:'👕',name:'Laundry Legion',           area:'The Sock Abyss',       desc:'Wash, dry, fold, and put away all laundry.',diff:1},
+  {id:'r10',icon:'📞',name:'The Social Quest',         area:'Whispering Chasm',     desc:"Call a family member or old friend you've been meaning to catch up with.",diff:1},
+  {id:'r11',icon:'🚿',name:'Bathroom Blitz',           area:'Mildew Marshes',       desc:'Deep clean the entire bathroom. Scrub everything.',diff:2},
+  {id:'r12',icon:'🌿',name:'Garden Guardian',          area:"Theron's Wilds",       desc:'Spend an hour tending to plants, a garden, or outdoor space.',diff:2},
+  {id:'r13',icon:'🍽️',name:'Do All the Dishes',        area:'The Sinking Swamp',    desc:'Clear the sink completely. Wash, dry, and put away every last dish.',diff:1},
 ];
 
 const EMOJIS = ['🏃','💪','📚','🧘','💧','🥗','😴','🎸','✏️','🧹','🏋️','🚴','🎯','🌿','🧠','💊','🎮','🧽','🐕','🎨','🏊','🍎'];
@@ -596,10 +597,11 @@ function defaults(){
       {id:'h4',name:'20 pullups',       icon:'💪',baseXP:30,completions:{}},
     ],
     equipped:{head:null,cape:null,amulet:null,weapon:null,body:null,shield:null,legs:null,gloves:null,boots:null,ring:null},
+    shieldedDays:[],
     inventory:[],
     shopItems:[], shopLastRefresh:'',
     upgrades:{},
-    raidKey:'', raidId:'', raidDone:false, raidHistory:[],
+    raidKey:'', raidIds:[], raidsDone:{}, raidHistory:[],
     pendingLoot:null,
     achievements:[],
     dailyBuff:{date:'',id:''},
@@ -646,6 +648,16 @@ Object.keys(S.equipped).forEach(slot=>{ if(S.equipped[slot]) migrateItem(S.equip
 if(S.shopItems.some(i=>i.str===undefined)) S.shopLastRefresh='';
 // Migrate pendingGold from gold units to silver units (×100)
 if(!S.goldVersion||S.goldVersion<2){ S.pendingGold=Math.floor((S.pendingGold||0)*100); S.goldVersion=2; }
+// Ensure shieldedDays exists and prune entries older than 365 days
+if(!S.shieldedDays) S.shieldedDays=[];
+(function(){const cutoff=new Date();cutoff.setDate(cutoff.getDate()-365);const cs=cutoff.toISOString().slice(0,10);S.shieldedDays=S.shieldedDays.filter(d=>d>=cs);})();
+// Migrate single-raid system to two-raid system; force r13 (Dishes) as this week's first raid
+if(!S.raidIds||!S.raidIds.length){
+  const wk=(()=>{const d=new Date();const jan4=new Date(d.getFullYear(),0,4);const diff=d-jan4;const wn=Math.ceil((diff/86400000+jan4.getDay()+1)/7);return d.getFullYear()+'-W'+String(wn).padStart(2,'0');})();
+  S.raidIds=['r13', S.raidId||RAIDS[0].id];
+  S.raidsDone={'r13':false,[S.raidId||RAIDS[0].id]:S.raidDone||false};
+  S.raidKey=wk; // keep this week's key so ensureRaid doesn't overwrite
+}
 
 // ═══════════════════════ HELPERS ═════════════════════════════════════
 
@@ -732,13 +744,39 @@ function canClaim(){ return todayCount()>=getQuota()&&S.pendingGold>=100; }
 function getStreak(h){
   let s=0;
   const t=today(), td=new Date();
+  const shielded=S.shieldedDays||[];
   const start=h.completions[t]?0:1;
   for(let i=start;i<365;i++){
     const d=new Date(td); d.setDate(td.getDate()-i);
-    if(h.completions[d.toISOString().slice(0,10)]) s++;
+    const ds=d.toISOString().slice(0,10);
+    if(h.completions[ds]||shielded.includes(ds)) s++;
     else break;
   }
   return s;
+}
+
+// Check if yesterday was a missed day and a streak shield should absorb it
+function checkShieldActivation(){
+  const yd=new Date(); yd.setDate(yd.getDate()-1);
+  const ydStr=yd.toISOString().slice(0,10);
+  if((S.shieldedDays||[]).includes(ydStr)) return; // already shielded this day
+  // Count completions yesterday
+  const missedYesterday=S.habits.filter(h=>h.completions[ydStr]).length===0;
+  if(!missedYesterday) return;
+  // Check a streak was actually in progress (something completed day before yesterday)
+  const db=new Date(); db.setDate(db.getDate()-2);
+  const dbStr=db.toISOString().slice(0,10);
+  const hadStreak=S.habits.some(h=>h.completions[dbStr]||(S.shieldedDays||[]).includes(dbStr));
+  if(!hadStreak) return;
+  // Find an equipped item with charges remaining
+  const shieldItem=Object.values(S.equipped).find(item=>item&&(item.streakShield||0)>0);
+  if(!shieldItem) return;
+  shieldItem.streakShield--;
+  S.shieldedDays=S.shieldedDays||[];
+  S.shieldedDays.push(ydStr);
+  save();
+  const rem=shieldItem.streakShield;
+  toast(`🛡️ Streak Shield absorbed a missed day! (${rem} charge${rem!==1?'s':''} left)`,'tl');
 }
 
 function getTotalCompletions(){
@@ -813,6 +851,10 @@ function genItem(rarity,slot){
   const[sMin,sMax]=RSTR[rarity];
   const[dMin,dMax]=RDEX[rarity];
   const[wMin,wMax]=RWIS[rarity];
+  // Streak shield: epic 30% chance → 1 charge; legendary 60% chance → 1–2 charges
+  let streakShieldMax=0;
+  if(rarity==='epic'&&Math.random()<0.30) streakShieldMax=1;
+  if(rarity==='legendary'&&Math.random()<0.60) streakShieldMax=Math.random()<0.45?2:1;
   return {
     id:uid(), name, slot, rarity,
     icon:SICO[slot],
@@ -820,6 +862,7 @@ function genItem(rarity,slot){
     dex:rnd(dMin,dMax),
     wis:rnd(wMin,wMax),
     price:RPRC[rarity]+rnd(-10,10),
+    ...(streakShieldMax>0?{streakShield:streakShieldMax,streakShieldMax}:{}),
   };
 }
 
@@ -1128,22 +1171,25 @@ function renderShop(){
 
 function renderRaids(){
   ensureRaid();
-  const raid=RAIDS.find(r=>r.id===S.raidId)||RAIDS[0];
-  const done=S.raidDone;
   const boost=getRaidBoost();
   const rs=getRaidStats();
-  const diffStars='⭐'.repeat(raid.diff);
-  const diffCol=['','#9d9d9d','#10b981','#0070dd','#a335ee'][raid.diff];
   const boostCol=boost>=12?'var(--legendary)':boost>=8?'var(--epic)':boost>=4?'var(--rare)':'var(--muted)';
 
-  document.getElementById('raidMain').innerHTML=`
-    <div class="raid-card">
+  const raidIds=S.raidIds||[];
+  const raidsDone=S.raidsDone||{};
+  const cards=raidIds.map(rid=>{
+    const raid=RAIDS.find(r=>r.id===rid)||RAIDS[0];
+    const done=!!raidsDone[rid];
+    const diffStars='⭐'.repeat(raid.diff);
+    const diffCol=['','#9d9d9d','#10b981','#0070dd','#a335ee'][raid.diff];
+    return `<div class="raid-card">
       <div style="display:flex;justify-content:space-between;margin-bottom:10px">
         <span style="background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:3px 10px;font-size:.72rem;color:var(--muted)">${S.raidKey}</span>
         <span style="font-size:.72rem;color:${diffCol}">Difficulty ${diffStars}</span>
       </div>
       <div class="raid-icon">${raid.icon}</div>
       <div class="raid-title">${raid.name}</div>
+      ${raid.area?`<div style="font-size:.72rem;color:var(--accent2);margin-bottom:4px;letter-spacing:.04em">📍 ${raid.area}</div>`:''}
       <div class="raid-desc">${raid.desc}</div>
       <div class="raid-chips">
         <div class="raid-chip">💰 +${raid.diff*50} gold bonus</div>
@@ -1156,11 +1202,13 @@ function renderRaids(){
         <span style="color:#60b4ff">🧠 WIS ${rs.wis}</span>
       </div>
       ${done
-        ? `<div style="background:#0f1f0f;border:1px solid var(--green);border-radius:10px;padding:12px;color:var(--green);font-weight:600">✅ Completed this week! New raid arrives next week.</div>`
-        : `<button class="btn btn-p" style="width:100%;padding:12px;font-size:.95rem" onclick="completeRaid()">⚔️ Mark Raid Complete</button>
+        ? `<div style="background:#0f1f0f;border:1px solid var(--green);border-radius:10px;padding:12px;color:var(--green);font-weight:600">✅ Completed this week!</div>`
+        : `<button class="btn btn-p" style="width:100%;padding:12px;font-size:.95rem" onclick="completeRaid('${rid}')">⚔️ Mark Raid Complete</button>
            <div style="margin-top:9px;color:var(--muted);font-size:.74rem">Equip better gear to boost your STR/DEX/WIS and earn rarer loot</div>`
       }
     </div>`;
+  }).join('');
+  document.getElementById('raidMain').innerHTML=cards;
 
   const hist=document.getElementById('raidHist');
   const histEmpty=document.getElementById('raidHistEmpty');
@@ -1228,6 +1276,7 @@ function toggleHabit(id){
     S.totalXP=Math.max(0,S.totalXP-h.baseXP);
     save(); render(); return;
   }
+  checkShieldActivation(); // absorb a missed yesterday before we count today
   h.completions[t]=true;
   const prev=getLvlInfo();
   let xpGain=h.baseXP;
@@ -1245,6 +1294,16 @@ function toggleHabit(id){
       streakBonus*=2;
     }
     xpGain*=(1+streakBonus/100);
+  }
+
+  // Streak shield recharge: every 7-day milestone refills one depleted charge
+  if(streak>0&&streak%7===0){
+    const depItem=Object.values(S.equipped).find(item=>item&&item.streakShieldMax&&(item.streakShield||0)<item.streakShieldMax);
+    if(depItem){
+      depItem.streakShield=(depItem.streakShield||0)+1;
+      save();
+      toast(`🛡️ Streak Shield recharged! (${depItem.streakShield}/${depItem.streakShieldMax})`,'tg');
+    }
   }
 
   // Apply pet XP bonuses
@@ -1433,6 +1492,7 @@ function showItem(item,fromSlot){
     <div class="m-stat"><span>⚔️ Strength</span><span style="color:#ef4444">+${item.str}${delta(cmpStr)}</span></div>
     <div class="m-stat"><span>🏹 Dexterity</span><span style="color:#10b981">+${item.dex}${delta(cmpDex)}</span></div>
     <div class="m-stat"><span>🧠 Wisdom</span><span style="color:#60b4ff">+${item.wis}${delta(cmpWis)}</span></div>
+    ${item.streakShieldMax?`<div class="m-stat"><span>🛡️ Streak Shield</span><span style="color:#a855f7">${item.streakShield}/${item.streakShieldMax} charge${item.streakShieldMax>1?'s':''}</span></div>`:''}
     <div class="m-stat"><span>Slot</span><span style="color:var(--muted)">${SLBL[item.slot]}</span></div>
     ${cur&&!fromSlot?`<div class="m-stat"><span>Replaces</span><span style="color:var(--muted);font-size:.76rem">${cur.name}</span></div>`:''}`;
   document.getElementById('mActs').innerHTML=fromSlot
@@ -1482,14 +1542,18 @@ function buyUpgrade(id){
 function ensureRaid(){
   const wk=weekKey();
   if(S.raidKey!==wk){
-    const idx=parseInt(wk.split('-W')[1])%RAIDS.length;
-    S.raidKey=wk; S.raidId=RAIDS[idx].id; S.raidDone=false; save();
+    const wn=parseInt(wk.split('-W')[1]);
+    const idx=wn%RAIDS.length;
+    const idx2=(idx+Math.ceil(RAIDS.length/2))%RAIDS.length;
+    const id1=RAIDS[idx].id, id2=RAIDS[idx2].id;
+    S.raidKey=wk; S.raidIds=[id1,id2]; S.raidsDone={[id1]:false,[id2]:false}; save();
   }
 }
 
-function completeRaid(){
-  if(S.raidDone) return;
-  const raid=RAIDS.find(r=>r.id===S.raidId)||RAIDS[0];
+function completeRaid(raidId){
+  if(!raidId) raidId=(S.raidIds||[])[0]||RAIDS[0].id;
+  if(S.raidsDone&&S.raidsDone[raidId]) return;
+  const raid=RAIDS.find(r=>r.id===raidId)||RAIDS[0];
   const eqCount=Object.values(S.equipped).filter(Boolean).length;
   const avgR=Object.values(S.equipped).filter(Boolean)
     .reduce((a,i)=>a+['common','uncommon','rare','epic','legendary'].indexOf(i.rarity),0)
@@ -1502,7 +1566,8 @@ function completeRaid(){
   const scaledWis=Math.min(5, rs.wis/60*5 + raid.diff*0.2);
   const rarity=rollRarity(boost, scaledStr, scaledDex, scaledWis);
   const item=genItem(rarity);
-  S.raidDone=true; S.pendingLoot=item;
+  if(!S.raidsDone) S.raidsDone={};
+  S.raidsDone[raidId]=true; S.pendingLoot=item;
   const goldBonus=raid.diff*50; S.gold+=goldBonus;
   S.raidHistory.unshift({rIcon:raid.icon,rName:raid.name,item:{...item},date:today(),week:S.raidKey});
   if(S.raidHistory.length>20) S.raidHistory.pop();
