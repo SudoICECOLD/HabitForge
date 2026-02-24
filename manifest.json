@@ -1,0 +1,13 @@
+{
+  "name": "HabitForge",
+  "short_name": "HabitForge",
+  "description": "Idle RPG habit tracker",
+  "start_url": "/HabitForge/",
+  "display": "standalone",
+  "background_color": "#0d0d16",
+  "theme_color": "#0d0d16",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
