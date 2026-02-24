@@ -440,9 +440,9 @@ const RDEX = {common:[1,3],uncommon:[3,6],rare:[6,11],epic:[11,18],legendary:[18
 const RWIS = {common:[1,3],uncommon:[3,6],rare:[6,11],epic:[11,18],legendary:[18,30]};
 const RPRC = {common:35,uncommon:90,rare:220,epic:700,legendary:2200};
 
-const SLOTS = ['head','cape','amulet','weapon','body','shield','legs','gloves','boots','ring'];
-const SLBL  = {head:'Head',cape:'Cape',amulet:'Amulet',weapon:'Weapon',body:'Body',shield:'Shield',legs:'Legs',gloves:'Gloves',boots:'Boots',ring:'Ring'};
-const SICO  = {head:'⛑️',cape:'🧣',amulet:'📿',weapon:'⚔️',body:'👕',shield:'🛡️',legs:'👖',gloves:'🥊',boots:'👟',ring:'💍'};
+const SLOTS = ['head','cape','amulet','weapon','body','shield','legs','gloves','boots','ring','trinket'];
+const SLBL  = {head:'Head',cape:'Cape',amulet:'Amulet',weapon:'Weapon',body:'Body',shield:'Shield',legs:'Legs',gloves:'Gloves',boots:'Boots',ring:'Ring',trinket:'Trinket'};
+const SICO  = {head:'⛑️',cape:'🧣',amulet:'📿',weapon:'⚔️',body:'👕',shield:'🛡️',legs:'👖',gloves:'🥊',boots:'👟',ring:'💍',trinket:'🔮'};
 
 const PREFIXES = {
   common:['Worn','Rusty','Cracked','Old','Bronze','Iron'],
@@ -461,7 +461,8 @@ const ITYPE = {
   legs:['Platelegs','Greaves','Robe Bottom','Shorts','Plateskirt'],
   gloves:['Gauntlets','Gloves','Vambraces','Grips'],
   boots:['Boots','Sandals','Greaves','Treads','Sabatons'],
-  ring:['Ring','Band','Signet','Berserker Ring','Onyx Ring']
+  ring:['Ring','Band','Signet','Berserker Ring','Onyx Ring'],
+  trinket:['Charm','Talisman','Bauble','Relic','Totem','Idol','Shard','Token']
 };
 const SFXPOOL = ['','','','of Focus','of Endurance','of Power','of the Berserker','of Fortune','of Discipline','of the Guardian'];
 
@@ -596,7 +597,7 @@ function defaults(){
       {id:'h3',name:'Drink 1 litre',    icon:'💧',baseXP:10,completions:{}},
       {id:'h4',name:'20 pullups',       icon:'💪',baseXP:30,completions:{}},
     ],
-    equipped:{head:null,cape:null,amulet:null,weapon:null,body:null,shield:null,legs:null,gloves:null,boots:null,ring:null},
+    equipped:{head:null,cape:null,amulet:null,weapon:null,body:null,shield:null,legs:null,gloves:null,boots:null,ring:null,trinket:null},
     shieldedDays:[],
     inventory:[],
     shopItems:[], shopLastRefresh:'',
@@ -651,6 +652,8 @@ if(!S.goldVersion||S.goldVersion<2){ S.pendingGold=Math.floor((S.pendingGold||0)
 // Ensure shieldedDays exists and prune entries older than 365 days
 if(!S.shieldedDays) S.shieldedDays=[];
 (function(){const cutoff=new Date();cutoff.setDate(cutoff.getDate()-365);const cs=cutoff.toISOString().slice(0,10);S.shieldedDays=S.shieldedDays.filter(d=>d>=cs);})();
+// Migrate: ensure trinket slot exists for old saves
+if(S.equipped.trinket===undefined) S.equipped.trinket=null;
 // Migrate single-raid system to two-raid system; force r13 (Dishes) as this week's first raid
 if(!S.raidIds||!S.raidIds.length){
   const wk=(()=>{const d=new Date();const jan4=new Date(d.getFullYear(),0,4);const diff=d-jan4;const wn=Math.ceil((diff/86400000+jan4.getDay()+1)/7);return d.getFullYear()+'-W'+String(wn).padStart(2,'0');})();
@@ -1041,16 +1044,17 @@ function renderQuests(){
 function renderCharacter(){
 
   // Equipment grid - OSRS layout:
-  // row1: [cape]  [head]   [amulet]
-  // row2: [weapon][🧙]     [shield]
-  // row3: [gloves][body]   [ring]
-  // row4: [empty] [legs]   [empty]
-  // row5: [empty] [boots]  [empty]
+  // row1: [empty]  [head]   [empty]
+  // row2: [cape]   [amulet] [empty]
+  // row3: [weapon] [body]   [shield]
+  // row4: [gloves] [legs]   [ring]
+  // row5: [empty]  [boots]  [trinket]
   const layout=[
-    ['cape','head','amulet'],
+    [null,'head',null],
+    ['cape','amulet',null],
     ['weapon','body','shield'],
     ['gloves','legs','ring'],
-    [null,'boots',null],
+    [null,'boots','trinket'],
   ];
   const grid=document.getElementById('equipGrid'); grid.innerHTML='';
   layout.forEach(row=>row.forEach(slot=>{
@@ -1495,10 +1499,20 @@ function showItem(item,fromSlot){
     ${item.streakShieldMax?`<div class="m-stat"><span>🛡️ Streak Shield</span><span style="color:#a855f7">${item.streakShield}/${item.streakShieldMax} charge${item.streakShieldMax>1?'s':''}</span></div>`:''}
     <div class="m-stat"><span>Slot</span><span style="color:var(--muted)">${SLBL[item.slot]}</span></div>
     ${cur&&!fromSlot?`<div class="m-stat"><span>Replaces</span><span style="color:var(--muted);font-size:.76rem">${cur.name}</span></div>`:''}`;
+  const sellVal=Math.max(1,Math.floor((item.price||RPRC[item.rarity])*0.5));
   document.getElementById('mActs').innerHTML=fromSlot
     ? `<button class="btn btn-ghost" onclick="unequipItem('${item.slot}')">Unequip</button><button class="btn btn-ghost" onclick="closeOverlay('itemOverlay')">Close</button>`
-    : `<button class="btn btn-p" onclick="equipItem('${item.id}')">Equip</button><button class="btn btn-ghost" onclick="closeOverlay('itemOverlay')">Close</button>`;
+    : `<button class="btn btn-p" onclick="equipItem('${item.id}')">Equip</button><button class="btn btn-ghost" style="color:#ef4444;border-color:#ef4444" onclick="sellItem('${item.id}',${sellVal})">Sell (${sellVal}g)</button><button class="btn btn-ghost" onclick="closeOverlay('itemOverlay')">Close</button>`;
   document.getElementById('itemOverlay').classList.add('show');
+}
+
+function sellItem(itemId,val){
+  const idx=S.inventory.findIndex(i=>i.id===itemId); if(idx===-1) return;
+  const item=S.inventory[idx];
+  S.inventory.splice(idx,1);
+  S.gold+=val;
+  save(); closeOverlay('itemOverlay'); renderCharacter(); updateHeader();
+  toast(`💰 Sold ${item.name} for ${val}g`,'tg');
 }
 
 function exportSave(){
