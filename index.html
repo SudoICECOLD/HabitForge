@@ -1046,15 +1046,15 @@ function renderCharacter(){
   // Equipment grid - OSRS layout:
   // row1: [empty]  [head]   [empty]
   // row2: [cape]   [amulet] [empty]
-  // row3: [weapon] [body]   [shield]
-  // row4: [gloves] [legs]   [ring]
-  // row5: [empty]  [boots]  [trinket]
+  // row3: [weapon] [body]    [shield]
+  // row4: [gloves] [legs]    [ring]
+  // row5: [empty]  [boots]   [empty]
   const layout=[
     [null,'head',null],
-    ['cape','amulet',null],
+    ['cape','amulet','trinket'],
     ['weapon','body','shield'],
     ['gloves','legs','ring'],
-    [null,'boots','trinket'],
+    [null,'boots',null],
   ];
   const grid=document.getElementById('equipGrid'); grid.innerHTML='';
   layout.forEach(row=>row.forEach(slot=>{
