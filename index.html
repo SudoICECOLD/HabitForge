@@ -451,6 +451,16 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
   </div>
 </div>
 
+<div class="overlay" id="achOverlay">
+  <div class="lvlup-modal">
+    <div id="achIcon" style="font-size:3rem;margin-bottom:8px"></div>
+    <div id="achName" style="font-size:1.2rem;font-weight:800;color:var(--accent2);margin-bottom:6px"></div>
+    <div id="achDesc" style="color:var(--muted);font-size:.85rem;margin-bottom:8px"></div>
+    <div id="achDate" style="color:var(--muted);font-size:.72rem;margin-bottom:20px"></div>
+    <button class="btn btn-ghost" onclick="closeOverlay('achOverlay')">Close</button>
+  </div>
+</div>
+
 <div class="toast-box" id="toastBox"></div>
 
 <script>
@@ -661,6 +671,7 @@ function defaults(){
     raidKey:'', raidIds:[], raidsDone:{}, raidHistory:[],
     pendingLoot:null,
     achievements:[],
+    achievementDates:{},
     dailyBuff:{date:'',id:''},
     lootLog:[],
     ownedPets:[],
@@ -683,6 +694,7 @@ let S = (()=>{
       raidHistory:saved.raidHistory||[],
       habits:saved.habits||d.habits,
       achievements:saved.achievements||[],
+      achievementDates:saved.achievementDates||{},
       dailyBuff:saved.dailyBuff||{date:'',id:''},
       lootLog:saved.lootLog||[],
       delveLootLog:saved.delveLootLog||[],
@@ -981,8 +993,11 @@ function checkAchievements(){
   Object.keys(checks).forEach(id=>{
     if(!S.achievements.includes(id)&&checks[id]()){
       S.achievements.push(id);
+      if(!S.achievementDates) S.achievementDates={};
+      S.achievementDates[id]=new Date().toISOString();
       save();
       const ach=ACHIEVEMENTS[id];
+      playAchievement();
       toast(`🎉 ${ach.icon} ${ach.name}: ${ach.desc}`,'tl');
     }
   });
@@ -1194,7 +1209,7 @@ function renderCharacter(){
     let achHtml=`<div class="achievements-section"><div class="sec">Achievements</div><div class="achievements-grid">`;
     S.achievements.forEach(id=>{
       const ach=ACHIEVEMENTS[id];
-      achHtml+=`<div class="achievement-badge" title="${ach.desc}"><div class="achievement-icon">${ach.icon}</div><div class="achievement-name">${ach.name}</div></div>`;
+      achHtml+=`<div class="achievement-badge" title="${ach.desc}" onclick="showAchievement('${id}')" style="cursor:pointer"><div class="achievement-icon">${ach.icon}</div><div class="achievement-name">${ach.name}</div></div>`;
     });
     achHtml+=`</div></div>`;
     document.getElementById('achievementsContainer').innerHTML=achHtml;
@@ -1408,9 +1423,10 @@ function toggleHabit(id){
 
   S.totalXP+=Math.floor(xpGain);
   const nw=getLvlInfo();
+  playQuestComplete();
   toast(`+${Math.floor(xpGain)} XP — ${h.name}`,'tx');
-  if(nw.lvl.level>prev.lvl.level) setTimeout(()=>showLevelUp(nw.lvl.level,nw.lvl.title),400);
-  if(todayCount()===getQuota()) toast(`🔓 ${getQuota()} quests done! Claim your passive gold!`,'tg');
+  if(nw.lvl.level>prev.lvl.level){ setTimeout(()=>{ playLevelUp(); showLevelUp(nw.lvl.level,nw.lvl.title); },400); }
+  if(todayCount()===getQuota()){ setTimeout(()=>playQuotaReached(),150); toast(`🔓 ${getQuota()} quests done! Claim your passive gold!`,'tg'); }
   save(); render(); checkAchievements();
 }
 
@@ -1445,6 +1461,7 @@ function completeRitual(id){
   const r=(S.rituals||[]).find(x=>x.id===id); if(!r) return;
   if(r.completions[t]){ toast('✦ This ritual is already sealed for today.',''); return; }
   r.completions[t]=true;
+  playRitualComplete();
   let xpGain=25;
 
   // Apply ritual_xp buff
@@ -1525,6 +1542,7 @@ function buyShopItem(idx){
   S.gold-=item.shopPrice;
   S.inventory.push({...item});
   S.shopItems.splice(idx,1);
+  playPurchase();
   save(); renderShop(); renderCharacter(); updateHeader();
   toast(`✅ Bought ${item.name}!`,'tx');
   checkAchievements();
@@ -1548,6 +1566,7 @@ function equipItem(itemId){
   if(S.equipped[item.slot]) S.inventory.push({...S.equipped[item.slot]});
   S.equipped[item.slot]={...item};
   S.inventory=S.inventory.filter(i=>i.id!==itemId);
+  playEquip();
   save(); closeOverlay('itemOverlay'); renderCharacter();
   toast(`⚔️ Equipped ${item.name}!`,'');
   checkAchievements();
@@ -1597,6 +1616,7 @@ function sellItem(itemId,val){
   const item=S.inventory[idx];
   S.inventory.splice(idx,1);
   S.gold+=val;
+  playSell();
   save(); closeOverlay('itemOverlay'); renderCharacter(); updateHeader();
   toast(`💰 Sold ${item.name} for ${val}g`,'tg');
 }
@@ -1634,6 +1654,7 @@ function buyUpgrade(id){
   const cost=Math.floor(u.cost*Math.pow(u.mult,lvl));
   if(S.gold<cost){toast('❌ Not enough gold!','');return;}
   S.gold-=cost; S.upgrades[id]=lvl+1;
+  playPurchase();
   save(); updateHeader(); renderUpgrades();
   toast(`✅ ${u.name} upgraded to Lv.${lvl+1}!`,'tx');
   checkAchievements();
@@ -1675,6 +1696,7 @@ function completeRaid(raidId){
 }
 
 function showLootReveal(item,fromRaid,source){
+  setTimeout(()=>playLootDrop(),200);
   document.getElementById('lootSource').textContent=source==='ritual'?'✦ The ritual bore fruit...':source==='chest'?'📦 Chest opened!':'⚡ Raid Complete!';
   document.getElementById('lootIcon').textContent=item.icon;
   const lr=document.getElementById('lootRar');
@@ -1870,7 +1892,7 @@ function enterDelve(){
   D.active=true; D.floor=1; D.pot=[]; D.potRarityBonus=0;
   D.buffStats={str:0,dex:0,wis:0}; D.lootChanceBonus=0; D.hasPhylactery=false;
   D.activeDebuff=null; D.nextDebuff=null; D.state='fighting';
-  D.lastResult=null; D.lastBuff=null; D.lastLoot=null;
+  D.lastResult=null; D.lastBuff=null; D.lastLoot=null; D._nextEnemies=null;
   save(); renderDelve();
 }
 
@@ -2209,6 +2231,147 @@ function playPhylactery(){
   }catch(e){}
 }
 
+function playQuestComplete(){
+  try{
+    const ctx=_ac(), now=ctx.currentTime;
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(520,now); o.frequency.linearRampToValueAtTime(680,now+0.06);
+    g.gain.setValueAtTime(0,now); g.gain.linearRampToValueAtTime(0.18,now+0.01);
+    g.gain.exponentialRampToValueAtTime(0.001,now+0.22);
+    o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now+0.25);
+    setTimeout(()=>ctx.close(),500);
+  }catch(e){}
+}
+
+function playQuotaReached(){
+  try{
+    const ctx=_ac(), now=ctx.currentTime;
+    [523,659,784,1047].forEach((f,i)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='triangle'; o.frequency.value=f;
+      const t=now+i*0.1;
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.2,t+0.015);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.55);
+    });
+    setTimeout(()=>ctx.close(),1500);
+  }catch(e){}
+}
+
+function playRitualComplete(){
+  try{
+    const ctx=_ac(), now=ctx.currentTime;
+    [440,660].forEach((f,i)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='sine'; o.frequency.value=f+(Math.random()-0.5)*5;
+      const t=now+i*0.15;
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.16,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.55);
+    });
+    setTimeout(()=>ctx.close(),1200);
+  }catch(e){}
+}
+
+function playEquip(){
+  try{
+    const ctx=_ac(), now=ctx.currentTime;
+    const len=Math.floor(ctx.sampleRate*0.12);
+    const buf=ctx.createBuffer(1,len,ctx.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2);
+    const src=ctx.createBufferSource(); src.buffer=buf;
+    const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=700; bp.Q.value=4;
+    const g=ctx.createGain(); g.gain.setValueAtTime(0.5,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.1);
+    src.connect(bp); bp.connect(g); g.connect(ctx.destination); src.start(now);
+    // short metallic ring
+    const o=ctx.createOscillator(), g2=ctx.createGain();
+    o.type='sine'; o.frequency.value=350;
+    g2.gain.setValueAtTime(0.12,now); g2.gain.exponentialRampToValueAtTime(0.001,now+0.18);
+    o.connect(g2); g2.connect(ctx.destination); o.start(now); o.stop(now+0.2);
+    setTimeout(()=>ctx.close(),500);
+  }catch(e){}
+}
+
+function playSell(){
+  try{
+    const ctx=_ac(), now=ctx.currentTime;
+    [1200,900].forEach((f,i)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='sine'; o.frequency.value=f;
+      const t=now+i*0.07;
+      g.gain.setValueAtTime(0.14,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.2);
+    });
+    setTimeout(()=>ctx.close(),600);
+  }catch(e){}
+}
+
+function playPurchase(){
+  try{
+    const ctx=_ac(), now=ctx.currentTime;
+    [700,1050].forEach((f,i)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='sine'; o.frequency.value=f;
+      const t=now+i*0.08;
+      g.gain.setValueAtTime(0.14,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.22);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.25);
+    });
+    setTimeout(()=>ctx.close(),600);
+  }catch(e){}
+}
+
+function playLevelUp(){
+  try{
+    const ctx=_ac(), now=ctx.currentTime;
+    [392,494,587,740,988].forEach((f,i)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='triangle'; o.frequency.value=f;
+      const t=now+i*0.11;
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.22,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.55);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.6);
+    });
+    setTimeout(()=>ctx.close(),2000);
+  }catch(e){}
+}
+
+function playAchievement(){
+  try{
+    const ctx=_ac(), now=ctx.currentTime;
+    // Two quick rising notes then a sustained shimmer
+    [[622,0],[830,0.1],[1047,0.22],[1047,0.32]].forEach(([f,t])=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='sine'; o.frequency.value=f;
+      // Add a slight harmonic overtone for bell quality
+      const o2=ctx.createOscillator(), g2=ctx.createGain();
+      o2.type='sine'; o2.frequency.value=f*2.76;
+      g2.gain.setValueAtTime(0.06,now+t); g2.gain.exponentialRampToValueAtTime(0.001,now+t+0.4);
+      o2.connect(g2); g2.connect(ctx.destination); o2.start(now+t); o2.stop(now+t+0.45);
+      const sustain=t===0.22||t===0.32?0.7:0.25;
+      g.gain.setValueAtTime(0,now+t); g.gain.linearRampToValueAtTime(0.2,now+t+0.015);
+      g.gain.exponentialRampToValueAtTime(0.001,now+t+sustain);
+      o.connect(g); g.connect(ctx.destination); o.start(now+t); o.stop(now+t+sustain+0.05);
+    });
+    setTimeout(()=>ctx.close(),1800);
+  }catch(e){}
+}
+
+function playPetAdopt(){
+  try{
+    const ctx=_ac(), now=ctx.currentTime;
+    [880,1100,1320,1100,1540].forEach((f,i)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='sine'; o.frequency.value=f;
+      const t=now+i*0.07;
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.13,t+0.01);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.2);
+    });
+    setTimeout(()=>ctx.close(),1200);
+  }catch(e){}
+}
+
 // ═══════════════════════ UI HELPERS ══════════════════════════════════
 
 const _tabOrder=['quests','character','pets','shop','raids','delve','upgrades'];
@@ -2247,6 +2410,18 @@ function _goTabByIdx(i){
 
 function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
 
+function showAchievement(id){
+  const ach=ACHIEVEMENTS[id]; if(!ach) return;
+  document.getElementById('achIcon').textContent=ach.icon;
+  document.getElementById('achName').textContent=ach.name;
+  document.getElementById('achDesc').textContent=ach.desc;
+  const d=S.achievementDates&&S.achievementDates[id];
+  document.getElementById('achDate').textContent=d
+    ?'Unlocked '+new Date(d).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})
+    :'Unlocked date unknown';
+  document.getElementById('achOverlay').classList.add('show');
+}
+
 document.querySelectorAll('.overlay').forEach(o=>{
   o.addEventListener('click',e=>{
     if(e.target===o){
@@ -2273,6 +2448,7 @@ function buyPet(typeId){
   S.gold -= cost;
   S.ownedPets.push(typeId);
   const pet = PETS[typeId];
+  playPetAdopt();
   save(); render(); updateHeader();
   toast('🐾 ' + pet.name + ' joined your forge!', 'tg');
   checkAchievements();
