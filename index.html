@@ -941,9 +941,9 @@ function goldTick(){
   document.getElementById('claimBtn').disabled=!canClaim();
   document.getElementById('hGold').textContent=Math.floor(S.gold);
   document.getElementById('hQuota').textContent=`${todayCount()}/${getQuota()} today`;
-  const _si=Object.values(S.equipped).find(i=>i&&i.streakShieldMax>0);
+  const _sis=Object.values(S.equipped).filter(i=>i&&i.streakShieldMax>0);
   const _se=document.getElementById('hShield');
-  if(_si&&_se){ _se.style.display=''; document.getElementById('hShieldVal').textContent=`${_si.streakShield}/${_si.streakShieldMax}`; }
+  if(_sis.length&&_se){ _se.style.display=''; document.getElementById('hShieldVal').textContent=`${_sis.reduce((s,i)=>s+(i.streakShield||0),0)}/${_sis.reduce((s,i)=>s+i.streakShieldMax,0)}`; }
   else if(_se) _se.style.display='none';
 }
 
@@ -999,11 +999,13 @@ function updateHeader(){
   document.getElementById('hXpTxt').textContent=`${xpIn}/${xpFor}`;
   document.getElementById('hGold').textContent=Math.floor(S.gold);
   document.getElementById('hQuota').textContent=`${todayCount()}/${getQuota()} today`;
-  const shieldItem=Object.values(S.equipped).find(i=>i&&i.streakShieldMax>0);
+  const shieldItems=Object.values(S.equipped).filter(i=>i&&i.streakShieldMax>0);
   const shieldEl=document.getElementById('hShield');
-  if(shieldItem&&shieldEl){
+  if(shieldItems.length&&shieldEl){
+    const cur=shieldItems.reduce((s,i)=>s+(i.streakShield||0),0);
+    const max=shieldItems.reduce((s,i)=>s+i.streakShieldMax,0);
     shieldEl.style.display='';
-    document.getElementById('hShieldVal').textContent=`${shieldItem.streakShield}/${shieldItem.streakShieldMax}`;
+    document.getElementById('hShieldVal').textContent=`${cur}/${max}`;
   } else if(shieldEl){
     shieldEl.style.display='none';
   }
