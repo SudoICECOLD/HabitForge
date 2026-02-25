@@ -544,14 +544,14 @@ const DAILY_BUFFS = [
 ];
 
 const ENEMIES = [
-  {id:'goblin',    name:'Goblin',      token:1, str:8,  dex:6,  wis:4,  icon:'👺', desc:'Weak but annoying.'},
-  {id:'skeleton',  name:'Skeleton',    token:1, str:6,  dex:10, wis:5,  icon:'💀', desc:'Hard to hit, falls apart.'},
-  {id:'orc',       name:'Orc',         token:2, str:16, dex:7,  wis:9,  icon:'👹', desc:'Hits like a truck.'},
-  {id:'troll',     name:'Troll',       token:2, str:13, dex:6,  wis:14, icon:'🧌', desc:'Tanky and relentless.'},
-  {id:'darkknight',name:'Dark Knight', token:3, str:20, dex:16, wis:14, icon:'🖤', desc:'Disciplined and deadly.'},
-  {id:'golem',     name:'Stone Golem', token:3, str:17, dex:5,  wis:20, icon:'🗿', desc:'Nearly impossible to dodge.'},
-  {id:'lich',      name:'Lich',        token:4, str:22, dex:20, wis:18, icon:'☠️', desc:'Ancient and precise.'},
-  {id:'dragon',    name:'Dragon',      token:5, str:30, dex:24, wis:22, icon:'🐉', desc:'The apex of the dungeon.'},
+  {id:'goblin',    name:'Goblin',      token:1, str:14, dex:11, wis:7,  icon:'👺', desc:'Weak but annoying.'},
+  {id:'skeleton',  name:'Skeleton',    token:1, str:11, dex:18, wis:9,  icon:'💀', desc:'Hard to hit, falls apart.'},
+  {id:'orc',       name:'Orc',         token:2, str:29, dex:13, wis:16, icon:'👹', desc:'Hits like a truck.'},
+  {id:'troll',     name:'Troll',       token:2, str:23, dex:11, wis:25, icon:'🧌', desc:'Tanky and relentless.'},
+  {id:'darkknight',name:'Dark Knight', token:3, str:36, dex:29, wis:25, icon:'🖤', desc:'Disciplined and deadly.'},
+  {id:'golem',     name:'Stone Golem', token:3, str:31, dex:9,  wis:36, icon:'🗿', desc:'Nearly impossible to dodge.'},
+  {id:'lich',      name:'Lich',        token:4, str:40, dex:36, wis:32, icon:'☠️', desc:'Ancient and precise.'},
+  {id:'dragon',    name:'Dragon',      token:5, str:54, dex:43, wis:40, icon:'🐉', desc:'The apex of the dungeon.'},
 ];
 
 const DELVE_BUFFS = [
@@ -663,7 +663,7 @@ function defaults(){
     dailyBuff:{date:'',id:''},
     lootLog:[],
     ownedPets:[],
-    delve:{lastDate:'',active:false,floor:0,pot:null,potRarityBonus:0,buffStats:{str:0,dex:0,wis:0},lootChanceBonus:0,hasPhylactery:false,activeDebuff:null,nextDebuff:null,state:'idle',lastResult:null,lastBuff:null,lastLoot:null},
+    delve:{lastDate:'',active:false,floor:0,pot:[],potRarityBonus:0,buffStats:{str:0,dex:0,wis:0},lootChanceBonus:0,hasPhylactery:false,activeDebuff:null,nextDebuff:null,state:'idle',lastResult:null,lastBuff:null,lastLoot:null},
   };
 }
 
@@ -709,7 +709,8 @@ if(!S.goldVersion||S.goldVersion<2){ S.pendingGold=Math.floor((S.pendingGold||0)
 if(!S.shieldedDays) S.shieldedDays=[];
 (function(){const cutoff=new Date();cutoff.setDate(cutoff.getDate()-365);const cs=cutoff.toISOString().slice(0,10);S.shieldedDays=S.shieldedDays.filter(d=>d>=cs);})();
 // Migrate: ensure delve object exists for old saves
-if(!S.delve) S.delve={lastDate:'',active:false,floor:0,pot:null,potRarityBonus:0,buffStats:{str:0,dex:0,wis:0},lootChanceBonus:0,hasPhylactery:false,activeDebuff:null,nextDebuff:null,state:'idle',lastResult:null,lastBuff:null,lastLoot:null};
+if(!S.delve) S.delve={lastDate:'',active:false,floor:0,pot:[],potRarityBonus:0,buffStats:{str:0,dex:0,wis:0},lootChanceBonus:0,hasPhylactery:false,activeDebuff:null,nextDebuff:null,state:'idle',lastResult:null,lastBuff:null,lastLoot:null};
+if(!Array.isArray(S.delve.pot)) S.delve.pot=S.delve.pot?[S.delve.pot]:[];
 // Migrate: ensure trinket slot exists for old saves
 if(S.equipped.trinket===undefined) S.equipped.trinket=null;
 // Migrate single-raid system to two-raid system; force r13 (Dishes) as this week's first raid
@@ -1165,6 +1166,7 @@ function renderCharacter(){
     <div class="stat-row"><span>⚔️ Strength</span><span style="color:#ef4444">${rs.str}</span></div>
     <div class="stat-row"><span>🏹 Dexterity</span><span style="color:#10b981">${rs.dex}</span></div>
     <div class="stat-row"><span>🧠 Wisdom</span><span style="color:#60b4ff">${rs.wis}</span></div>
+    <div class="stat-row"><span>❤️ Delve HP</span><span style="color:#f87171">${100+rs.str+rs.dex+rs.wis}</span></div>
     <div class="stat-row"><span>🎯 Raid Power</span><span style="color:${boostCol};font-weight:700">+${boost}% loot quality</span></div>
     <div class="stat-row"><span>Gold / Hour</span><span style="color:var(--gold)">${getGph()} 💰</span></div>
     <div class="stat-row"><span>Gold Cap</span><span style="color:var(--gold)">${getCap()}h storage</span></div>
@@ -1822,11 +1824,6 @@ function rollDelveBuff(){
   return pool[0];
 }
 
-function rollDelveDebuff(floor){
-  const chance=Math.max(0,(floor-2)*0.12);
-  if(Math.random()>chance) return null;
-  return DELVE_DEBUFFS[Math.floor(Math.random()*DELVE_DEBUFFS.length)];
-}
 
 function applyDelveBuff(buff){
   const D=S.delve;
@@ -1853,7 +1850,7 @@ function enterDelve(){
   if(lvl<5){ toast('🔒 Reach Level 5 to enter the Dungeon',''); return; }
   if(S.delve.lastDate===today()){ toast('You have already delved today.',''); return; }
   const D=S.delve;
-  D.active=true; D.floor=1; D.pot=null; D.potRarityBonus=0;
+  D.active=true; D.floor=1; D.pot=[]; D.potRarityBonus=0;
   D.buffStats={str:0,dex:0,wis:0}; D.lootChanceBonus=0; D.hasPhylactery=false;
   D.activeDebuff=null; D.nextDebuff=null; D.state='fighting';
   D.lastResult=null; D.lastBuff=null; D.lastLoot=null;
@@ -1884,16 +1881,22 @@ function fightFloor(){
         D.hasPhylactery=false;
         result.win=true; D.lastResult.win=true; D.lastResult.phylactery=true;
       } else {
-        D.state='dead'; D.active=false; D.lastDate=today(); D.pot=null; save();
+        D.state='dead'; D.active=false; D.lastDate=today(); D.pot=[]; save();
       }
     }
 
     if(result.win){
       const loot=rollDelveLoot(D.floor,D.potRarityBonus,D.lootChanceBonus);
-      if(loot){ if(D.potRarityBonus>0) upgradeLootRarity(loot,D.potRarityBonus); D.pot=loot; }
+      if(loot){ if(D.potRarityBonus>0) upgradeLootRarity(loot,D.potRarityBonus); D.pot.push(loot); }
       D.lastLoot=loot;
-      D.lastBuff=rollDelveBuff();
-      if(D.floor<10){ D._nextEnemies=getFloorEnemies(D.floor+1); D.nextDebuff=rollDelveDebuff(D.floor+1); }
+      D.lastBuff=null; D.nextDebuff=null;
+      if(D.floor<10){
+        D._nextEnemies=getFloorEnemies(D.floor+1);
+        if(Math.random()<0.25) D.nextDebuff=DELVE_DEBUFFS[Math.floor(Math.random()*DELVE_DEBUFFS.length)];
+        else D.lastBuff=rollDelveBuff();
+      } else {
+        D.lastBuff=rollDelveBuff(); // floor 10 victory always gives a buff
+      }
       D.state='result';
     }
     save(); renderDelve();
@@ -1916,9 +1919,12 @@ function fightFloor(){
 
 function claimAndLeave(){
   const D=S.delve;
-  if(D.pot){ S.inventory.push({...D.pot}); save(); toast(`🏆 Escaped with ${D.pot.name}!`,'tg'); }
-  else toast('Left the dungeon empty-handed.','');
-  D.state='idle'; D.active=false; D.lastDate=today(); D.pot=null; save(); renderDelve(); renderCharacter();
+  if(D.pot.length){
+    D.pot.forEach(item=>S.inventory.push({...item}));
+    const names=D.pot.map(i=>i.name).join(', ');
+    toast(`🏆 Escaped with: ${names}!`,'tg');
+  } else toast('Left the dungeon empty-handed.','');
+  D.state='idle'; D.active=false; D.lastDate=today(); D.pot=[]; save(); renderDelve(); renderCharacter();
 }
 
 function proceedFloor(){
@@ -1973,8 +1979,8 @@ function renderDelve(){
   const buffHtml=buffList.length?`<div class="delve-buffs">${buffList.map(b=>`<span class="delve-buff-chip">${b}</span>`).join('')}</div>`:'';
 
   // Pot display
-  const potHtml=D.pot
-    ?`<div class="delve-pot"><span style="font-size:1.4rem">${D.pot.icon}</span><div><div style="font-weight:600;color:${RCOL[D.pot.rarity]}">${D.pot.name}</div><div style="font-size:.72rem;color:var(--muted)">${RLBL[D.pot.rarity]} · in the pot</div></div></div>`
+  const potHtml=D.pot.length
+    ?`<div class="delve-pot" style="flex-direction:column;align-items:stretch;gap:4px">${D.pot.map(item=>`<div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.2rem">${item.icon}</span><div><div style="font-weight:600;color:${RCOL[item.rarity]}">${item.name}</div><div style="font-size:.72rem;color:var(--muted)">${RLBL[item.rarity]} · in the pot</div></div></div>`).join('')}</div>`
     :`<div class="delve-pot delve-pot-empty"><span>📦</span><span style="color:var(--muted)">Pot is empty — nothing to claim yet</span></div>`;
 
   // ── IDLE ──
@@ -2048,9 +2054,11 @@ function renderDelve(){
     const lootHtml=D.lastLoot
       ?`<div style="margin-bottom:8px;padding:8px 12px;background:var(--bg);border:1px solid ${RCOL[D.lastLoot.rarity]};border-radius:9px;font-size:.82rem">🎁 <span style="color:${RCOL[D.lastLoot.rarity]};font-weight:700">${D.lastLoot.name}</span> dropped into the pot!</div>`
       :`<div style="margin-bottom:8px;font-size:.78rem;color:var(--muted)">No loot this floor.</div>`;
-    const buffHtml2=D.lastBuff?`<div class="delve-buffs"><span class="delve-buff-chip">✨ ${D.lastBuff.name}: ${D.lastBuff.desc}</span></div>`:'';
-    const nextDebuffHtml=D.floor<10&&D.nextDebuff
-      ?`<div style="margin-top:8px"><span class="delve-debuff-chip">${D.nextDebuff.icon} Floor ${D.floor+1} debuff: ${D.nextDebuff.name} — ${D.nextDebuff.desc}</span></div>`:'';
+    const rewardHtml=D.lastBuff
+      ?`<div class="delve-buffs"><span class="delve-buff-chip">✨ ${D.lastBuff.name}: ${D.lastBuff.desc}</span></div>`
+      :D.nextDebuff
+        ?`<div style="margin-top:8px"><span class="delve-debuff-chip">${D.nextDebuff.icon} ${D.nextDebuff.name} — ${D.nextDebuff.desc} <span style="font-size:.7rem;opacity:.75">(hits floor ${D.floor+1})</span></span></div>`
+        :'';
     const isLast=D.floor>=10;
     el.innerHTML=`
       <div class="delve-card">
@@ -2058,11 +2066,10 @@ function renderDelve(){
         <div style="font-weight:800;color:var(--accent2);margin-bottom:10px">Floor ${D.floor} Complete</div>
         ${combatHtml}
         ${lootHtml}
-        ${buffHtml2}
-        ${nextDebuffHtml}
+        ${rewardHtml}
         ${potHtml}
         <div style="display:flex;gap:10px;margin-top:12px">
-          <button class="btn btn-ghost" style="flex:1" onclick="claimAndLeave()">${D.pot?`🏃 Claim & Leave`:'🏃 Leave'}</button>
+          <button class="btn btn-ghost" style="flex:1" onclick="claimAndLeave()">${D.pot.length?`🏃 Claim & Leave`:'🏃 Leave'}</button>
           ${!isLast?`<button class="btn btn-p" style="flex:1" onclick="proceedFloor()">⬇️ Floor ${D.floor+1}</button>`:`<button class="btn btn-p" style="flex:1" onclick="claimAndLeave()">🏆 Claim Victory</button>`}
         </div>
       </div>`;
@@ -2245,6 +2252,64 @@ render();
 setInterval(goldTick,1000);
 // Save every 30s
 setInterval(save,30000);
+
+// ═══════════════════════ DEV PANEL ════════════════════════════════════
+(function(){
+  const btn=document.createElement('button');
+  btn.textContent='🛠️';
+  btn.style.cssText='position:fixed;bottom:72px;right:12px;z-index:9000;background:#1e293b;border:1px solid #334155;color:#fff;border-radius:50%;width:38px;height:38px;font-size:1rem;cursor:pointer;opacity:.6;';
+  document.body.appendChild(btn);
+
+  const panel=document.createElement('div');
+  panel.style.cssText='display:none;position:fixed;bottom:116px;right:12px;z-index:9001;background:#0f172a;border:1px solid #334155;border-radius:12px;padding:12px;width:210px;display:none;flex-direction:column;gap:8px;';
+  panel.innerHTML=`
+    <div style="font-size:.7rem;color:#64748b;font-weight:700;letter-spacing:.08em;margin-bottom:2px">DEV TOOLS</div>
+    <button onclick="devResetDelve()" style="${dbtn()}">⚔️ Reset Delve Cooldown</button>
+    <button onclick="devAddGold()" style="${dbtn()}">💰 +1000 Gold</button>
+    <button onclick="devAddXP()" style="${dbtn()}">⭐ +500 XP</button>
+    <button onclick="devGiveLegendary()" style="${dbtn()}">🏆 Give Legendary Item</button>
+    <button onclick="devCompleteToday()" style="${dbtn()}">✅ Complete All Quests Today</button>
+    <button onclick="devLevelUp()" style="${dbtn()}">🚀 Level Up (force +1)</button>
+  `;
+  document.body.appendChild(panel);
+
+  function dbtn(){ return 'width:100%;padding:7px 10px;background:#1e293b;border:1px solid #334155;border-radius:7px;color:#e2e8f0;font-size:.78rem;cursor:pointer;text-align:left;'; }
+
+  btn.onclick=()=>{ panel.style.display=panel.style.display==='none'?'flex':'none'; };
+
+  window.devResetDelve=function(){
+    S.delve.lastDate=''; save(); renderDelve();
+    toast('🛠️ Delve cooldown reset','tg');
+  };
+  window.devAddGold=function(){
+    S.gold+=1000; save(); updateHeader();
+    toast('🛠️ +1000g','tg');
+  };
+  window.devAddXP=function(){
+    S.totalXP+=500; save(); renderCharacter(); updateHeader();
+    toast('🛠️ +500 XP','tg');
+  };
+  window.devGiveLegendary=function(){
+    const slots=Object.keys(SICO);
+    const slot=slots[Math.floor(Math.random()*slots.length)];
+    const item=genItem(slot,'legendary');
+    S.inventory.push(item); save(); renderCharacter();
+    toast(`🛠️ ${item.name} added to inventory`,'tg');
+  };
+  window.devCompleteToday=function(){
+    const t=today();
+    S.habits.forEach(h=>{ h.completions=h.completions||{}; h.completions[t]=true; });
+    S.rituals&&S.rituals.forEach(h=>{ h.completions=h.completions||{}; h.completions[t]=true; });
+    save(); render();
+    toast('🛠️ All quests completed','tg');
+  };
+  window.devLevelUp=function(){
+    const info=getLvlInfo();
+    const needed=info.lvl.cumXP+info.lvl.xpNeeded-S.totalXP+1;
+    S.totalXP+=Math.max(1,needed); save(); renderCharacter(); updateHeader();
+    toast(`🛠️ Level up!`,'tg');
+  };
+})();
 </script>
 </body>
 </html>
