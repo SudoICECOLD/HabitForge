@@ -292,7 +292,7 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
   <button class="tab" onclick="goTab('pets',this)">🐾 Pets</button>
   <button class="tab" onclick="goTab('shop',this)">🏪 Shop</button>
   <button class="tab" onclick="goTab('raids',this)">⚡ Raids</button>
-  <button class="tab" onclick="goTab('delve',this)">⛏️ Delve</button>
+  <button class="tab" onclick="goTab('delve',this)">⚰️ Delve</button>
   <button class="tab" onclick="goTab('upgrades',this)">🏰 Conquest</button>
 </nav>
 
@@ -664,6 +664,7 @@ function defaults(){
     lootLog:[],
     ownedPets:[],
     delve:{lastDate:'',active:false,floor:0,pot:[],potRarityBonus:0,buffStats:{str:0,dex:0,wis:0},lootChanceBonus:0,hasPhylactery:false,activeDebuff:null,nextDebuff:null,state:'idle',lastResult:null,lastBuff:null,lastLoot:null},
+    delveLootLog:[],
   };
 }
 
@@ -683,6 +684,7 @@ let S = (()=>{
       achievements:saved.achievements||[],
       dailyBuff:saved.dailyBuff||{date:'',id:''},
       lootLog:saved.lootLog||[],
+      delveLootLog:saved.delveLootLog||[],
       ownedPets:saved.ownedPets||[],
     };
   }catch{return defaults();}
@@ -1305,7 +1307,7 @@ function renderRaids(){
     lootHistHtml=`<div class="loot-history-section"><div class="sec">Loot History</div><div>`;
     S.lootLog.slice(0,20).forEach(entry=>{
       const dateStr=new Date(entry.date).toLocaleDateString('en-US',{month:'short',day:'numeric'});
-      const sourceLabel=entry.source==='raid'?'⚡ Raid':entry.source==='ritual'?'✦ Ritual':'📦 Chest';
+      const sourceLabel=entry.source==='raid'?'⚡ Raid':entry.source==='ritual'?'✦ Ritual':entry.source==='delve'?'⚰️ Delve':'📦 Chest';
       lootHistHtml+=`<div class="loot-entry"><div class="loot-entry-item">${entry.item.icon}</div><div style="flex:1"><div style="color:${RCOL[entry.item.rarity]};font-weight:700;font-size:.78rem">${RLBL[entry.item.rarity]}</div><div style="color:var(--muted);font-size:.7rem">${entry.item.name}</div></div><div style="text-align:right;color:var(--muted);font-size:.7rem"><div>${sourceLabel}</div><div>${dateStr}</div></div></div>`;
     });
     lootHistHtml+=`</div></div>`;
@@ -1920,7 +1922,17 @@ function fightFloor(){
 function claimAndLeave(){
   const D=S.delve;
   if(D.pot.length){
-    D.pot.forEach(item=>S.inventory.push({...item}));
+    D.pot.forEach(item=>{
+      S.inventory.push({...item});
+      // Log to delve loot log
+      if(!S.delveLootLog) S.delveLootLog=[];
+      S.delveLootLog.unshift({item:{icon:item.icon,name:item.name,rarity:item.rarity},floor:D.floor,date:new Date().toISOString()});
+      if(S.delveLootLog.length>30) S.delveLootLog.pop();
+      // Also feed into general loot log
+      if(!S.lootLog) S.lootLog=[];
+      S.lootLog.unshift({source:'delve',sourceName:'Dungeon Delve',item:{icon:item.icon,name:item.name,rarity:item.rarity},date:new Date().toISOString()});
+      if(S.lootLog.length>30) S.lootLog.pop();
+    });
     const names=D.pot.map(i=>i.name).join(', ');
     toast(`🏆 Escaped with: ${names}!`,'tg');
   } else toast('Left the dungeon empty-handed.','');
@@ -1986,17 +1998,31 @@ function renderDelve(){
   // ── IDLE ──
   if(D.state==='idle'){
     const done=D.lastDate===today();
+    // Delve loot log
+    const dll=S.delveLootLog||[];
+    let delveLootHtml='';
+    if(dll.length){
+      delveLootHtml=`<div class="loot-history-section" style="margin-top:12px"><div class="sec">Dungeon Loot</div><div>`;
+      dll.slice(0,20).forEach(entry=>{
+        const dateStr=new Date(entry.date).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+        delveLootHtml+=`<div class="loot-entry"><div class="loot-entry-item">${entry.item.icon}</div><div style="flex:1"><div style="color:${RCOL[entry.item.rarity]};font-weight:700;font-size:.78rem">${RLBL[entry.item.rarity]}</div><div style="color:var(--muted);font-size:.7rem">${entry.item.name}</div></div><div style="text-align:right;color:var(--muted);font-size:.7rem"><div>⚰️ Floor ${entry.floor}</div><div>${dateStr}</div></div></div>`;
+      });
+      delveLootHtml+=`</div></div>`;
+    } else {
+      delveLootHtml=`<div class="loot-history-section" style="margin-top:12px"><div class="sec">Dungeon Loot</div><div style="color:var(--muted);font-size:.83rem;padding:8px 0">No loot claimed yet.</div></div>`;
+    }
     el.innerHTML=`
       <div class="delve-card">
         <div class="delve-floor-bar">${dots}</div>
-        <div style="font-size:2.5rem;margin-bottom:8px">🏚️</div>
+        <div style="font-size:2.5rem;margin-bottom:8px">⚰️</div>
         <div style="font-weight:800;font-size:1.1rem;color:var(--accent2);margin-bottom:6px">The Dungeon</div>
         <div style="color:var(--muted);font-size:.83rem;margin-bottom:16px">10 floors of escalating danger. Die and lose everything.</div>
         <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px">⚔️ STR ${rs.str} &nbsp; 🏹 DEX ${rs.dex} &nbsp; 🧠 WIS ${rs.wis}</div>
         ${done
           ?`<div style="background:#0f1f0f;border:1px solid var(--green);border-radius:10px;padding:12px;color:var(--green);font-weight:600">✅ Already delved today. Returns tomorrow.</div>`
-          :`<button class="btn btn-p" style="width:100%;padding:12px;font-size:.95rem" onclick="enterDelve()">⛏️ Enter Dungeon</button>`}
-      </div>`;
+          :`<button class="btn btn-p" style="width:100%;padding:12px;font-size:.95rem" onclick="enterDelve()">⚰️ Enter Dungeon</button>`}
+      </div>
+      ${delveLootHtml}`;
     return;
   }
 
