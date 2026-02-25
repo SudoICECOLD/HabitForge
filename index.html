@@ -282,6 +282,7 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
       <button class="claim-btn" id="claimBtn" onclick="claimGold()" disabled>Claim</button>
     </div>
     <div class="pill" id="hQuota" style="font-size:.75rem;color:var(--muted)">0/3 today</div>
+    <div class="pill" id="hShield" style="display:none;font-size:.75rem;color:#a855f7">🛡️ <span id="hShieldVal"></span></div>
   </div>
 </header>
 
@@ -940,6 +941,10 @@ function goldTick(){
   document.getElementById('claimBtn').disabled=!canClaim();
   document.getElementById('hGold').textContent=Math.floor(S.gold);
   document.getElementById('hQuota').textContent=`${todayCount()}/${getQuota()} today`;
+  const _si=Object.values(S.equipped).find(i=>i&&i.streakShieldMax>0);
+  const _se=document.getElementById('hShield');
+  if(_si&&_se){ _se.style.display=''; document.getElementById('hShieldVal').textContent=`${_si.streakShield}/${_si.streakShieldMax}`; }
+  else if(_se) _se.style.display='none';
 }
 
 function claimGold(){
@@ -994,6 +999,14 @@ function updateHeader(){
   document.getElementById('hXpTxt').textContent=`${xpIn}/${xpFor}`;
   document.getElementById('hGold').textContent=Math.floor(S.gold);
   document.getElementById('hQuota').textContent=`${todayCount()}/${getQuota()} today`;
+  const shieldItem=Object.values(S.equipped).find(i=>i&&i.streakShieldMax>0);
+  const shieldEl=document.getElementById('hShield');
+  if(shieldItem&&shieldEl){
+    shieldEl.style.display='';
+    document.getElementById('hShieldVal').textContent=`${shieldItem.streakShield}/${shieldItem.streakShieldMax}`;
+  } else if(shieldEl){
+    shieldEl.style.display='none';
+  }
 }
 
 function renderQuests(){
