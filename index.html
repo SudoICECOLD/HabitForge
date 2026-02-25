@@ -474,10 +474,24 @@ const RLBL = {common:'Common',uncommon:'Uncommon',rare:'Rare',epic:'Epic',legend
 const RWTS = {common:55,uncommon:25,rare:13,epic:6,legendary:1};
 // STR = raw power (epic/legendary odds), DEX = precision (rare/epic odds), WIS = knowledge (uncommon+ odds)
 // Per stat range per rarity; combined total drives raid loot % boost (max ~15% at full legendary)
-const RSTR = {common:[1,3],uncommon:[3,6],rare:[6,11],epic:[11,18],legendary:[18,30]};
-const RDEX = {common:[1,3],uncommon:[3,6],rare:[6,11],epic:[11,18],legendary:[18,30]};
-const RWIS = {common:[1,3],uncommon:[3,6],rare:[6,11],epic:[11,18],legendary:[18,30]};
 const RPRC = {common:35,uncommon:90,rare:220,epic:700,legendary:2200};
+const RMUL = {common:1.0,uncommon:1.35,rare:1.8,epic:2.4,legendary:3.2};
+const RREQ = {common:1,uncommon:3,rare:6,epic:10,legendary:14};
+
+function calcBudget(level,rarity){
+  return Math.max(3, Math.round((8 + level * 3.5) * RMUL[rarity]));
+}
+function distributeBudget(budget){
+  const w=[Math.random()+0.3, Math.random()+0.3, Math.random()+0.3];
+  const ws=w.reduce((a,b)=>a+b,0);
+  const str=Math.max(1,Math.round(budget*w[0]/ws));
+  const dex=Math.max(1,Math.round(budget*w[1]/ws));
+  const wis=Math.max(1,budget-str-dex);
+  return {str,dex,wis};
+}
+function calcItemPrice(level,rarity){
+  return Math.round(RPRC[rarity]*(0.5+level*0.05));
+}
 
 const SLOTS = ['head','cape','amulet','weapon','body','shield','legs','gloves','boots','ring','trinket'];
 const SLBL  = {head:'Head',cape:'Cape',amulet:'Amulet',weapon:'Weapon',body:'Body',shield:'Shield',legs:'Legs',gloves:'Gloves',boots:'Boots',ring:'Ring',trinket:'Trinket'};
@@ -728,6 +742,11 @@ if(!S.delve) S.delve={lastDate:'',active:false,floor:0,pot:[],potRarityBonus:0,b
 if(!Array.isArray(S.delve.pot)) S.delve.pot=S.delve.pot?[S.delve.pot]:[];
 // Migrate: ensure trinket slot exists for old saves
 if(S.equipped.trinket===undefined) S.equipped.trinket=null;
+// Migrate: grandfather existing items — no level requirement, itemLevel 1
+(function(){
+  const allItems=[...S.inventory, ...Object.values(S.equipped).filter(Boolean)];
+  allItems.forEach(item=>{ if(item&&item.levelReq===undefined){ item.levelReq=1; item.itemLevel=item.itemLevel||1; } });
+})();
 // Migrate single-raid system to two-raid system; force r13 (Dishes) as this week's first raid
 if(!S.raidIds||!S.raidIds.length){
   const wk=(()=>{const d=new Date();const jan4=new Date(d.getFullYear(),0,4);const diff=d-jan4;const wn=Math.ceil((diff/86400000+jan4.getDay()+1)/7);return d.getFullYear()+'-W'+String(wn).padStart(2,'0');})();
@@ -917,7 +936,8 @@ function upgradeRarity(rarity){
   return RARITIES[idx+1];
 }
 
-function genItem(rarity,slot){
+function genItem(rarity,slot,level){
+  if(!level) level=getLvlInfo().lvl.level;
   if(!slot) slot=SLOTS[Math.floor(Math.random()*SLOTS.length)];
   const pfx=PREFIXES[rarity][Math.floor(Math.random()*PREFIXES[rarity].length)];
   const typ=ITYPE[slot][Math.floor(Math.random()*ITYPE[slot].length)];
@@ -925,20 +945,17 @@ function genItem(rarity,slot){
     ? SFXPOOL.filter(s=>s!=='') : [''];
   const sfx=sfxPool[Math.floor(Math.random()*sfxPool.length)];
   const name=sfx?`${pfx} ${typ} ${sfx}`:`${pfx} ${typ}`;
-  const[sMin,sMax]=RSTR[rarity];
-  const[dMin,dMax]=RDEX[rarity];
-  const[wMin,wMax]=RWIS[rarity];
+  const budget=calcBudget(level,rarity);
+  const {str,dex,wis}=distributeBudget(budget);
   // Streak shield: epic 30% chance → 1 charge; legendary 60% chance → 1–2 charges
   let streakShieldMax=0;
   if(rarity==='epic'&&Math.random()<0.30) streakShieldMax=1;
   if(rarity==='legendary'&&Math.random()<0.60) streakShieldMax=Math.random()<0.45?2:1;
   return {
-    id:uid(), name, slot, rarity,
-    icon:SICO[slot],
-    str:rnd(sMin,sMax),
-    dex:rnd(dMin,dMax),
-    wis:rnd(wMin,wMax),
-    price:RPRC[rarity]+rnd(-10,10),
+    id:uid(), name, slot, rarity, icon:SICO[slot],
+    itemLevel:level, levelReq:RREQ[rarity],
+    str, dex, wis,
+    price:calcItemPrice(level,rarity),
     ...(streakShieldMax>0?{streakShield:streakShieldMax,streakShieldMax}:{}),
   };
 }
@@ -1563,6 +1580,8 @@ function openChest(type){
 
 function equipItem(itemId){
   const item=S.inventory.find(i=>i.id===itemId); if(!item) return;
+  const req=item.levelReq||1;
+  if(getLvlInfo().lvl.level<req){ toast(`🔒 Requires Level ${req} to equip`,''); return; }
   if(S.equipped[item.slot]) S.inventory.push({...S.equipped[item.slot]});
   S.equipped[item.slot]={...item};
   S.inventory=S.inventory.filter(i=>i.id!==itemId);
@@ -1597,17 +1616,22 @@ function showItem(item,fromSlot){
   const cmpStr=cur&&!fromSlot?item.str-cur.str:null;
   const cmpDex=cur&&!fromSlot?item.dex-cur.dex:null;
   const cmpWis=cur&&!fromSlot?item.wis-cur.wis:null;
+  const playerLvl=getLvlInfo().lvl.level;
+  const req=item.levelReq||1;
+  const canEquip=playerLvl>=req;
   document.getElementById('mStats').innerHTML=`
     <div class="m-stat"><span>⚔️ Strength</span><span style="color:#ef4444">+${item.str}${delta(cmpStr)}</span></div>
     <div class="m-stat"><span>🏹 Dexterity</span><span style="color:#10b981">+${item.dex}${delta(cmpDex)}</span></div>
     <div class="m-stat"><span>🧠 Wisdom</span><span style="color:#60b4ff">+${item.wis}${delta(cmpWis)}</span></div>
     ${item.streakShieldMax?`<div class="m-stat"><span>🛡️ Streak Shield</span><span style="color:#a855f7">${item.streakShield}/${item.streakShieldMax} charge${item.streakShieldMax>1?'s':''}</span></div>`:''}
     <div class="m-stat"><span>Slot</span><span style="color:var(--muted)">${SLBL[item.slot]}</span></div>
+    <div class="m-stat"><span>Item Level</span><span style="color:var(--muted)">Lv.${item.itemLevel||1}</span></div>
+    <div class="m-stat"><span>Requires</span><span style="color:${canEquip?'var(--muted)':'#ef4444'}">Level ${req}${canEquip?'':' 🔒'}</span></div>
     ${cur&&!fromSlot?`<div class="m-stat"><span>Replaces</span><span style="color:var(--muted);font-size:.76rem">${cur.name}</span></div>`:''}`;
   const sellVal=Math.max(1,Math.floor((item.price||RPRC[item.rarity])*0.5));
   document.getElementById('mActs').innerHTML=fromSlot
     ? `<button class="btn btn-ghost" onclick="unequipItem('${item.slot}')">Unequip</button><button class="btn btn-ghost" onclick="closeOverlay('itemOverlay')">Close</button>`
-    : `<button class="btn btn-p" onclick="equipItem('${item.id}')">Equip</button><button class="btn btn-ghost" style="color:#ef4444;border-color:#ef4444" onclick="sellItem('${item.id}',${sellVal})">Sell (${sellVal}g)</button><button class="btn btn-ghost" onclick="closeOverlay('itemOverlay')">Close</button>`;
+    : `<button class="btn btn-p" onclick="equipItem('${item.id}')" ${canEquip?'':'disabled style="opacity:.4"'}>${canEquip?'Equip':'🔒 Equip'}</button><button class="btn btn-ghost" style="color:#ef4444;border-color:#ef4444" onclick="sellItem('${item.id}',${sellVal})">Sell (${sellVal}g)</button><button class="btn btn-ghost" onclick="closeOverlay('itemOverlay')">Close</button>`;
   document.getElementById('itemOverlay').classList.add('show');
 }
 
@@ -1878,9 +1902,11 @@ function upgradeLootRarity(item,times){
   const newIdx=Math.min(RARITIES.length-1,idx+times);
   if(newIdx===idx) return item;
   item.rarity=RARITIES[newIdx];
-  item.str=rnd(...RSTR[item.rarity]);
-  item.dex=rnd(...RDEX[item.rarity]);
-  item.wis=rnd(...RWIS[item.rarity]);
+  item.levelReq=RREQ[item.rarity];
+  const lvl=item.itemLevel||getLvlInfo().lvl.level;
+  const {str,dex,wis}=distributeBudget(calcBudget(lvl,item.rarity));
+  item.str=str; item.dex=dex; item.wis=wis;
+  item.price=calcItemPrice(lvl,item.rarity);
   return item;
 }
 
