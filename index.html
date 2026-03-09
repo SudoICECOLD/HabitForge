@@ -697,7 +697,7 @@ function defaults(){
     dailyBuff:{date:'',id:''},
     lootLog:[],
     ownedPets:[],
-    delve:{lastDate:'',active:false,floor:0,pot:[],potRarityBonus:0,buffStats:{str:0,dex:0,wis:0},lootChanceBonus:0,hasPhylactery:false,activeDebuff:null,nextDebuff:null,state:'idle',lastResult:null,lastBuff:null,lastLoot:null},
+    delve:{lastDate:'',active:false,floor:0,pot:[],potRarityBonus:0,buffStats:{str:0,dex:0,wis:0},lootChanceBonus:0,hasPhylactery:false,activeDebuff:null,nextDebuff:null,state:'idle',lastResult:null,lastBuff:null,lastLoot:null,bestFloor:0},
     delveLootLog:[],
   };
 }
@@ -2055,6 +2055,7 @@ function fightFloor(){
     }
 
     if(result.win){
+      if(D.floor>(D.bestFloor||0)) D.bestFloor=D.floor;
       const loot=rollDelveLoot(D.floor,D.potRarityBonus,D.lootChanceBonus);
       if(loot){
         if(D.potRarityBonus>0) upgradeLootRarity(loot,D.potRarityBonus);
@@ -2188,7 +2189,8 @@ function renderDelve(){
         <div class="delve-floor-bar">${dots}</div>
         <div style="font-size:2.5rem;margin-bottom:8px">⚰️</div>
         <div style="font-weight:800;font-size:1.1rem;color:var(--accent2);margin-bottom:6px">The Dungeon</div>
-        <div style="color:var(--muted);font-size:.83rem;margin-bottom:16px">Endless depths. Enemies scale forever. Die and lose everything.</div>
+        <div style="color:var(--muted);font-size:.83rem;margin-bottom:10px">Endless depths. Enemies scale forever. Die and lose everything.</div>
+        ${D.bestFloor?`<div style="font-size:.8rem;color:var(--gold);margin-bottom:10px">🏆 Best: Floor ${D.bestFloor}</div>`:''}
         <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px">⚔️ STR ${rs.str} &nbsp; 🏹 DEX ${rs.dex} &nbsp; 🧠 WIS ${rs.wis}</div>
         ${done
           ?`<div style="background:#0f1f0f;border:1px solid var(--green);border-radius:10px;padding:12px;color:var(--green);font-weight:600">✅ Already delved today. Returns tomorrow.</div>`
