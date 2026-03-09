@@ -304,6 +304,7 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
     <div class="quota-dots" id="qdots"></div>
     <div style="flex:1;font-size:.83rem" id="quotaText"></div>
   </div>
+  <div id="streakDisplay" style="display:none;font-size:.83rem;color:var(--gold);padding:4px 16px 8px"></div>
   <div class="habit-list" id="habitList"></div>
   <button class="add-btn" onclick="toggleAddForm()">+ Add new quest</button>
   <div class="add-form card" id="addForm">
@@ -837,34 +838,39 @@ function getQuota(){
 }
 function canClaim(){ return todayCount()>=getQuota()&&S.pendingGold>=100; }
 
-function getStreak(h){
-  let s=0;
-  const t=today(), td=new Date();
-  const shielded=S.shieldedDays||[];
-  const start=h.completions[t]?0:1;
-  for(let i=start;i<365;i++){
-    const d=new Date(td); d.setDate(td.getDate()-i);
-    const ds=d.toISOString().slice(0,10);
-    if(h.completions[ds]||shielded.includes(ds)) s++;
-    else break;
-  }
-  return s;
+function countCompletionsForDate(ds){
+  return S.habits.filter(h=>h.completions&&h.completions[ds]).length;
 }
 
-// Check if yesterday was a missed day and a streak shield should absorb it
+function getDailyStreak(){
+  const quota=getQuota(), td=new Date();
+  const shielded=S.shieldedDays||[];
+  // If today's quota is already met, include today; otherwise start from yesterday
+  const startOffset=todayCount()>=quota?0:1;
+  let streak=0;
+  for(let i=startOffset;i<365;i++){
+    const d=new Date(td); d.setDate(td.getDate()-i);
+    const ds=d.toISOString().slice(0,10);
+    if(shielded.includes(ds)){ streak++; continue; }
+    if(countCompletionsForDate(ds)>=quota) streak++;
+    else break;
+  }
+  return streak;
+}
+
+// Check if yesterday's quota was missed and a streak shield should absorb it
 function checkShieldActivation(){
+  const quota=getQuota();
   const yd=new Date(); yd.setDate(yd.getDate()-1);
   const ydStr=yd.toISOString().slice(0,10);
-  if((S.shieldedDays||[]).includes(ydStr)) return; // already shielded this day
-  // Count completions yesterday
-  const missedYesterday=S.habits.filter(h=>h.completions[ydStr]).length===0;
-  if(!missedYesterday) return;
-  // Check a streak was actually in progress (something completed day before yesterday)
+  if((S.shieldedDays||[]).includes(ydStr)) return;
+  // Quota missed yesterday?
+  if(countCompletionsForDate(ydStr)>=quota) return;
+  // Streak was active before that (quota met or shielded day before yesterday)?
   const db=new Date(); db.setDate(db.getDate()-2);
   const dbStr=db.toISOString().slice(0,10);
-  const hadStreak=S.habits.some(h=>h.completions[dbStr]||(S.shieldedDays||[]).includes(dbStr));
+  const hadStreak=countCompletionsForDate(dbStr)>=quota||(S.shieldedDays||[]).includes(dbStr);
   if(!hadStreak) return;
-  // Find an equipped item with charges remaining
   const shieldItem=Object.values(S.equipped).find(item=>item&&(item.streakShield||0)>0);
   if(!shieldItem) return;
   shieldItem.streakShield--;
@@ -872,7 +878,7 @@ function checkShieldActivation(){
   S.shieldedDays.push(ydStr);
   save();
   const rem=shieldItem.streakShield;
-  toast(`🛡️ Streak Shield absorbed a missed day! (${rem} charge${rem!==1?'s':''} left)`,'tl');
+  toast(`🛡️ Streak Shield absorbed a missed quota day! (${rem} charge${rem!==1?'s':''} left)`,'tl');
 }
 
 function getTotalCompletions(){
@@ -994,9 +1000,9 @@ function checkAchievements(){
 
   const checks={
     first_quest: ()=>S.habits.some(h=>Object.values(h.completions).some(c=>c)),
-    week_warrior: ()=>S.habits.some(h=>getStreak(h)>=7),
-    fortnight: ()=>S.habits.some(h=>getStreak(h)>=14),
-    month: ()=>S.habits.some(h=>getStreak(h)>=30),
+    week_warrior: ()=>getDailyStreak()>=7,
+    fortnight: ()=>getDailyStreak()>=14,
+    month: ()=>getDailyStreak()>=30,
     legendary: ()=>S.inventory.some(i=>i.rarity==='legendary')||Object.values(S.equipped).some(i=>i&&i.rarity==='legendary'),
     level5: ()=>info.lvl.level>=5,
     level10: ()=>info.lvl.level>=10,
@@ -1071,21 +1077,32 @@ function renderQuests(){
     dots.appendChild(d);
   }
   const rem=quota-done;
+  const dailyStreak=getDailyStreak();
+  const streakBonus=dailyStreak>=7?Math.floor(dailyStreak/7)*10:0;
+  const streakMult=(S.dailyBuff&&S.dailyBuff.id==='streak_fire')?2:1;
+  const finalStreakBonus=streakBonus*streakMult;
   document.getElementById('quotaText').innerHTML=done>=quota
     ?`<strong>Daily quota met!</strong> Claim your passive gold 💰`
     :`Complete <strong>${rem} more quest${rem!==1?'s':''}</strong> to unlock today's passive gold`;
+  // Streak display below quota bar
+  const streakEl=document.getElementById('streakDisplay');
+  if(streakEl){
+    if(dailyStreak>0){
+      streakEl.style.display='';
+      streakEl.innerHTML=`🔥 <strong>${dailyStreak}-day streak</strong>${finalStreakBonus>0?` <span style="color:var(--gold);font-size:.75rem">(+${finalStreakBonus}% XP on all quests)</span>`:''}`;
+    } else {
+      streakEl.style.display='none';
+    }
+  }
 
   // habits
   const list=document.getElementById('habitList'); list.innerHTML='';
   S.habits.forEach(h=>{
-    const isDone=!!h.completions[t], streak=getStreak(h);
+    const isDone=!!h.completions[t];
     const el=document.createElement('div');
     el.className='habit-card'+(isDone?' done':'');
     el.dataset.id=h.id;
     el.onclick=()=>toggleHabit(h.id);
-    const streakBonus=streak>=7?Math.floor(streak/7)*10:0;
-    const streakMultiplier=(S.dailyBuff&&S.dailyBuff.id==='streak_fire')?2:1;
-    const finalBonus=streakBonus*streakMultiplier;
     el.innerHTML=`
       <button class="habit-del" onclick="event.stopPropagation();deleteHabit('${h.id}')" title="Remove quest">✕</button>
       <div class="h-icon">${h.icon}</div>
@@ -1093,7 +1110,6 @@ function renderQuests(){
         <div class="h-name">${h.name}</div>
         <div class="h-meta">
           <span>+${h.baseXP} XP</span>
-          ${streak>0?`<span class="h-streak">🔥 ${streak}-day streak${finalBonus>0?` (+${finalBonus}% XP)`:''}</span>`:''}
         </div>
       </div>
       <div class="h-check">${isDone?'✓':''}</div>`;
@@ -1408,18 +1424,17 @@ function toggleHabit(id){
     xpGain*=1.5;
   }
 
-  // Apply streak bonus
-  const streak=getStreak(h);
+  // Apply streak bonus (based on daily quota streak)
+  const streak=getDailyStreak();
   if(streak>=7){
     let streakBonus=Math.floor(streak/7)*10;
-    if(S.dailyBuff&&S.dailyBuff.id==='streak_fire'){
-      streakBonus*=2;
-    }
+    if(S.dailyBuff&&S.dailyBuff.id==='streak_fire') streakBonus*=2;
     xpGain*=(1+streakBonus/100);
   }
 
-  // Streak shield recharge: every 7-day milestone refills one depleted charge
-  if(streak>0&&streak%7===0){
+  // Streak shield recharge: fires when quota is hit and streak just crossed a 7-day milestone
+  const newStreak=todayCount()===getQuota()?streak+1:streak;
+  if(newStreak>0&&newStreak%7===0&&todayCount()===getQuota()){
     const depItem=Object.values(S.equipped).find(item=>item&&item.streakShieldMax&&(item.streakShield||0)<item.streakShieldMax);
     if(depItem){
       depItem.streakShield=(depItem.streakShield||0)+1;
