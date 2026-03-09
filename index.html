@@ -283,6 +283,7 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
     </div>
     <div class="pill" id="hQuota" style="font-size:.75rem;color:var(--muted)">0/3 today</div>
     <div class="pill" id="hShield" style="display:none;font-size:.75rem;color:#a855f7">🛡️ <span id="hShieldVal"></span></div>
+    <div class="pill" id="hStreak" style="display:none;font-size:.75rem;color:var(--gold)">🔥 <span id="hStreakVal"></span></div>
   </div>
 </header>
 
@@ -980,6 +981,8 @@ function goldTick(){
   const _se=document.getElementById('hShield');
   if(_sis.length&&_se){ _se.style.display=''; document.getElementById('hShieldVal').textContent=`${_sis.reduce((s,i)=>s+(i.streakShield||0),0)}/${_sis.reduce((s,i)=>s+i.streakShieldMax,0)}`; }
   else if(_se) _se.style.display='none';
+  const _ste=document.getElementById('hStreak');
+  if(_ste){ const _s=getDailyStreak(); if(_s>0){_ste.style.display='';document.getElementById('hStreakVal').textContent=`${_s}`;}else _ste.style.display='none'; }
 }
 
 function claimGold(){
@@ -1046,6 +1049,12 @@ function updateHeader(){
     document.getElementById('hShieldVal').textContent=`${cur}/${max}`;
   } else if(shieldEl){
     shieldEl.style.display='none';
+  }
+  const streakEl=document.getElementById('hStreak');
+  if(streakEl){
+    const s=getDailyStreak();
+    if(s>0){ streakEl.style.display=''; document.getElementById('hStreakVal').textContent=`${s}`; }
+    else streakEl.style.display='none';
   }
 }
 
