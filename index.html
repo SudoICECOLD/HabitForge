@@ -284,6 +284,7 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
     <div class="pill" id="hQuota" style="font-size:.75rem;color:var(--muted)">0/3 today</div>
     <div class="pill" id="hShield" style="display:none;font-size:.75rem;color:#a855f7">🛡️ <span id="hShieldVal"></span></div>
     <div class="pill" id="hStreak" style="display:none;font-size:.75rem;color:var(--gold)">🔥 <span id="hStreakVal"></span></div>
+    <div class="pill" id="hTokens" style="display:none;font-size:.75rem;color:#38bdf8;cursor:pointer" onclick="goTab('quests',document.querySelector('.tab.active'))" title="Delve Tokens — complete Bounties to earn more">🎫 <span id="hTokensVal"></span></div>
   </div>
 </header>
 
@@ -306,33 +307,71 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
     <div style="flex:1;font-size:.83rem" id="quotaText"></div>
   </div>
   <div id="streakDisplay" style="display:none;font-size:.83rem;color:var(--gold);padding:4px 16px 8px"></div>
-  <div class="habit-list" id="habitList"></div>
-  <button class="add-btn" onclick="toggleAddForm()">+ Add new quest</button>
-  <div class="add-form card" id="addForm">
-    <div style="font-weight:600;margin-bottom:10px">New Quest</div>
-    <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">Start with an emoji to set the icon: <span style="color:var(--text)">💧 Drink 1 litre of water</span></div>
-    <div style="display:flex;gap:8px;margin-bottom:9px;flex-wrap:wrap">
-      <input class="form-input" id="hName" placeholder="💧 Drink 1 litre of water" style="flex:1;min-width:120px"/>
-      <input class="form-input" id="hXP" type="number" value="20" min="5" max="100" style="width:90px"/>
+  <!-- QUESTS collapsible -->
+  <div class="ritual-section-hdr" style="cursor:pointer;user-select:none" onclick="toggleSection('quests')">
+    <div style="display:flex;align-items:center;gap:8px;flex:1">
+      <div class="ritual-hdr-title">⚔️ Quests</div>
+      <span id="questsBadge" style="font-size:.72rem;color:var(--muted);font-weight:400"></span>
     </div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-p" onclick="addHabit()">Add</button>
-      <button class="btn btn-ghost" onclick="toggleAddForm()">Cancel</button>
+    <span id="questsChevron" style="color:var(--muted);font-size:.85rem">▾</span>
+  </div>
+  <div id="questsBody">
+    <div class="habit-list" id="habitList"></div>
+    <button class="add-btn" onclick="toggleAddForm()">+ Add new quest</button>
+    <div class="add-form card" id="addForm">
+      <div style="font-weight:600;margin-bottom:10px">New Quest</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">Start with an emoji to set the icon: <span style="color:var(--text)">💧 Drink 1 litre of water</span></div>
+      <div style="display:flex;gap:8px;margin-bottom:9px;flex-wrap:wrap">
+        <input class="form-input" id="hName" placeholder="💧 Drink 1 litre of water" style="flex:1;min-width:120px"/>
+        <input class="form-input" id="hXP" type="number" value="20" min="5" max="100" style="width:90px"/>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-p" onclick="addHabit()">Add</button>
+        <button class="btn btn-ghost" onclick="toggleAddForm()">Cancel</button>
+      </div>
     </div>
   </div>
-  <!-- RITUALS -->
-  <div class="ritual-section-hdr">
-    <div class="ritual-hdr-title">🌑 Rituals</div>
+  <!-- BOUNTIES collapsible -->
+  <div class="ritual-section-hdr" style="cursor:pointer;user-select:none;margin-top:4px" onclick="toggleSection('bounties')">
+    <div style="display:flex;align-items:center;gap:8px;flex:1">
+      <div class="ritual-hdr-title" style="color:#38bdf8">🎫 Bounties</div>
+      <span id="bountiesBadge" style="font-size:.72rem;color:var(--muted);font-weight:400"></span>
+    </div>
+    <span id="bountiesChevron" style="color:var(--muted);font-size:.85rem">▾</span>
   </div>
-  <div class="ritual-list" id="ritualList"></div>
-  <button class="add-ritual-btn" onclick="toggleRitualForm()">✦ Add new ritual</button>
-  <div class="add-form ritual-form card" id="ritualForm">
-    <div style="font-weight:600;margin-bottom:10px;color:#a855f7">✦ Bind a New Ritual</div>
-    <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">Start with an emoji to set the icon: <span style="color:var(--text)">🕯️ Evening meditation</span></div>
-    <input class="form-input" id="ritualName" placeholder="🕯️ Evening meditation" style="width:100%;margin-bottom:9px;box-sizing:border-box"/>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-p" onclick="addRitual()" style="background:#7c3aed">Bind Ritual</button>
-      <button class="btn btn-ghost" onclick="toggleRitualForm()">Cancel</button>
+  <div id="bountiesBody">
+    <div style="font-size:.72rem;color:var(--muted);padding:2px 0 8px">One-off tasks — complete to earn a Delve Token.</div>
+    <div class="habit-list" id="bountyList"></div>
+    <button class="add-btn" onclick="toggleBountyForm()" style="border-color:#1e3a4a;color:#38bdf8">+ Add new bounty</button>
+    <div class="add-form card" id="bountyForm" style="border-color:#1e3a4a">
+      <div style="font-weight:600;margin-bottom:10px;color:#38bdf8">🎫 New Bounty</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">Start with an emoji: <span style="color:var(--text)">📦 Clear out the garage</span></div>
+      <input class="form-input" id="bountyName" placeholder="📦 Clear out the garage" style="width:100%;margin-bottom:9px;box-sizing:border-box"/>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-p" onclick="addBounty()" style="background:#0369a1">Add</button>
+        <button class="btn btn-ghost" onclick="toggleBountyForm()">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <!-- RITUALS collapsible -->
+  <div class="ritual-section-hdr" style="cursor:pointer;user-select:none;margin-top:4px" onclick="toggleSection('rituals')">
+    <div style="display:flex;align-items:center;gap:8px;flex:1">
+      <div class="ritual-hdr-title">🌑 Rituals</div>
+      <span id="ritualsBadge" style="font-size:.72rem;color:var(--muted);font-weight:400"></span>
+    </div>
+    <span id="ritualsChevron" style="color:var(--muted);font-size:.85rem">▾</span>
+  </div>
+  <div id="ritualsBody">
+    <div class="ritual-list" id="ritualList"></div>
+    <button class="add-ritual-btn" onclick="toggleRitualForm()">✦ Add new ritual</button>
+    <div class="add-form ritual-form card" id="ritualForm">
+      <div style="font-weight:600;margin-bottom:10px;color:#a855f7">✦ Bind a New Ritual</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">Start with an emoji to set the icon: <span style="color:var(--text)">🕯️ Evening meditation</span></div>
+      <input class="form-input" id="ritualName" placeholder="🕯️ Evening meditation" style="width:100%;margin-bottom:9px;box-sizing:border-box"/>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-p" onclick="addRitual()" style="background:#7c3aed">Bind Ritual</button>
+        <button class="btn btn-ghost" onclick="toggleRitualForm()">Cancel</button>
+      </div>
     </div>
   </div>
 </div>
@@ -688,6 +727,9 @@ function defaults(){
     shieldedDays:[],
     inventory:[],
     storage:[],
+    bounties:[],
+    delveTokens:0,
+    sectionCollapsed:{},
     shopItems:[], shopLastRefresh:'',
     upgrades:{},
     raidKey:'', raidIds:[], raidsDone:{}, raidHistory:[],
@@ -713,6 +755,9 @@ let S = (()=>{
       upgrades:{...(saved.upgrades||{})},
       inventory:saved.inventory||[],
       storage:saved.storage||[],
+      bounties:saved.bounties||[],
+      delveTokens:saved.delveTokens||0,
+      sectionCollapsed:saved.sectionCollapsed||{},
       shopItems:saved.shopItems||[],
       raidHistory:saved.raidHistory||[],
       habits:saved.habits||d.habits,
@@ -990,6 +1035,8 @@ function goldTick(){
   else if(_se) _se.style.display='none';
   const _ste=document.getElementById('hStreak');
   if(_ste){ const _s=getDailyStreak(); if(_s>0){_ste.style.display='';document.getElementById('hStreakVal').textContent=`${_s}`;}else _ste.style.display='none'; }
+  const _tte=document.getElementById('hTokens');
+  if(_tte){ const _t=S.delveTokens||0; if(_t>0){_tte.style.display='';document.getElementById('hTokensVal').textContent=`${_t}`;}else _tte.style.display='none'; }
 }
 
 function claimGold(){
@@ -1063,6 +1110,24 @@ function updateHeader(){
     if(s>0){ streakEl.style.display=''; document.getElementById('hStreakVal').textContent=`${s}`; }
     else streakEl.style.display='none';
   }
+  const tokenEl=document.getElementById('hTokens');
+  if(tokenEl){ const t=S.delveTokens||0; if(t>0){tokenEl.style.display='';document.getElementById('hTokensVal').textContent=`${t}`;}else tokenEl.style.display='none'; }
+}
+
+function toggleSection(key){
+  S.sectionCollapsed[key]=!S.sectionCollapsed[key];
+  save();
+  applySectionCollapse();
+}
+function applySectionCollapse(){
+  ['quests','bounties','rituals'].forEach(key=>{
+    const body=document.getElementById(key+'Body');
+    const chevron=document.getElementById(key+'Chevron');
+    if(!body||!chevron) return;
+    const collapsed=!!S.sectionCollapsed[key];
+    body.style.display=collapsed?'none':'';
+    chevron.textContent=collapsed?'▸':'▾';
+  });
 }
 
 function renderQuests(){
@@ -1132,6 +1197,23 @@ function renderQuests(){
     list.appendChild(el);
   });
 
+  // bounties
+  const bountyList=document.getElementById('bountyList'); bountyList.innerHTML='';
+  (S.bounties||[]).forEach(b=>{
+    const el=document.createElement('div');
+    el.className='habit-card';
+    el.style.cssText='border-color:#1e3a4a;cursor:default';
+    el.innerHTML=`
+      <button class="habit-del" onclick="deleteBounty('${b.id}')" title="Remove bounty">✕</button>
+      <div class="h-icon">${b.icon}</div>
+      <div class="h-info">
+        <div class="h-name">${b.name}</div>
+        <div class="h-meta"><span style="color:#38bdf8">🎫 +1 Delve Token on complete</span></div>
+      </div>
+      <button class="btn btn-p btn-sm" style="background:#0369a1;flex-shrink:0;padding:6px 12px;font-size:.78rem" onclick="completeBounty('${b.id}')">Done</button>`;
+    bountyList.appendChild(el);
+  });
+
   // rituals
   const ritList=document.getElementById('ritualList'); ritList.innerHTML='';
   (S.rituals||[]).forEach(r=>{
@@ -1154,6 +1236,21 @@ function renderQuests(){
       <div class="ritual-check">${isDone?'✦':''}</div>`;
     ritList.appendChild(el);
   });
+
+  // Section badges
+  const qDone=S.habits.filter(h=>!!h.completions[t]).length;
+  const qTotal=S.habits.length;
+  const qBadge=document.getElementById('questsBadge');
+  if(qBadge) qBadge.textContent=qTotal?`${qDone}/${qTotal}`:'';
+  const bTotal=(S.bounties||[]).length;
+  const bBadge=document.getElementById('bountiesBadge');
+  if(bBadge) bBadge.textContent=bTotal?`${bTotal} open`:'';
+  const rDone=(S.rituals||[]).filter(r=>!!r.completions[t]).length;
+  const rTotal=(S.rituals||[]).length;
+  const rBadge=document.getElementById('ritualsBadge');
+  if(rBadge) rBadge.textContent=rTotal?`${rDone}/${rTotal}`:'';
+
+  applySectionCollapse();
 
   // Drag-to-reorder: quests
   if(window.Sortable){
@@ -1594,6 +1691,41 @@ function deleteRitual(id){
   save(); render();
 }
 
+// ── BOUNTIES ──────────────────────────────────────────────
+function toggleBountyForm(){
+  document.getElementById('bountyForm').classList.toggle('show');
+  document.getElementById('addForm').classList.remove('show');
+  document.getElementById('ritualForm').classList.remove('show');
+}
+function addBounty(){
+  const raw=document.getElementById('bountyName').value.trim(); if(!raw) return;
+  const firstChar=[...raw][0];
+  const hasEmoji=/\p{Emoji}/u.test(firstChar)&&firstChar!==raw[0].match(/[a-zA-Z0-9]/)?.[0];
+  const icon=hasEmoji?firstChar:'📋';
+  const name=hasEmoji?raw.slice([...raw][0].length).trim():raw;
+  if(!S.bounties) S.bounties=[];
+  S.bounties.push({id:uid(),icon,name,added:new Date().toISOString()});
+  document.getElementById('bountyName').value='';
+  document.getElementById('bountyForm').classList.remove('show');
+  save(); renderQuests();
+}
+function completeBounty(id){
+  if(!S.bounties) return;
+  const idx=S.bounties.findIndex(b=>b.id===id); if(idx===-1) return;
+  const b=S.bounties.splice(idx,1)[0];
+  S.delveTokens=(S.delveTokens||0)+1;
+  const xp=50;
+  S.totalXP+=xp;
+  playQuestComplete();
+  save(); renderQuests(); updateHeader(); renderCharacter();
+  toast(`🎫 Bounty complete! +1 Delve Token (+${xp} XP)`,'tg');
+  checkAchievements();
+}
+function deleteBounty(id){
+  S.bounties=(S.bounties||[]).filter(b=>b.id!==id);
+  save(); renderQuests();
+}
+
 function ensureShop(){
   const t=today();
   if(S.shopLastRefresh===t&&S.shopItems.length>0) return;
@@ -2017,7 +2149,8 @@ function upgradeLootRarity(item,times){
 function enterDelve(){
   const lvl=getLvlInfo().lvl.level;
   if(lvl<5){ toast('🔒 Reach Level 5 to enter the Dungeon',''); return; }
-  if(S.delve.lastDate===today()){ toast('You have already delved today.',''); return; }
+  if(!(S.delveTokens>0)){ toast('🎫 No Delve Tokens — complete a Bounty to earn one!',''); return; }
+  S.delveTokens--;
   const D=S.delve;
   D.active=true; D.floor=1; D.pot=[]; D.potRarityBonus=0;
   D.buffStats={str:0,dex:0,wis:0}; D.lootChanceBonus=0; D.hasPhylactery=false;
@@ -2170,7 +2303,7 @@ function renderDelve(){
 
   // ── IDLE ──
   if(D.state==='idle'){
-    const done=D.lastDate===today();
+    const tokens=S.delveTokens||0;
     // Delve loot log
     const dll=S.delveLootLog||[];
     let delveLootHtml='';
@@ -2192,9 +2325,10 @@ function renderDelve(){
         <div style="color:var(--muted);font-size:.83rem;margin-bottom:10px">Endless depths. Enemies scale forever. Die and lose everything.</div>
         ${D.bestFloor?`<div style="font-size:.8rem;color:var(--gold);margin-bottom:10px">🏆 Best: Floor ${D.bestFloor}</div>`:''}
         <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px">⚔️ STR ${rs.str} &nbsp; 🏹 DEX ${rs.dex} &nbsp; 🧠 WIS ${rs.wis}</div>
-        ${done
-          ?`<div style="background:#0f1f0f;border:1px solid var(--green);border-radius:10px;padding:12px;color:var(--green);font-weight:600">✅ Already delved today. Returns tomorrow.</div>`
-          :`<button class="btn btn-p" style="width:100%;padding:12px;font-size:.95rem" onclick="enterDelve()">⚰️ Enter Dungeon</button>`}
+        <div style="font-size:.8rem;color:#38bdf8;margin-bottom:12px">🎫 ${tokens} token${tokens!==1?'s':''} available</div>
+        ${tokens>0
+          ?`<button class="btn btn-p" style="width:100%;padding:12px;font-size:.95rem" onclick="enterDelve()">⚰️ Enter Dungeon (costs 1 token)</button>`
+          :`<div style="background:#0f1a1f;border:1px solid #1e3a4a;border-radius:10px;padding:12px;color:#38bdf8;font-size:.85rem">Complete a <strong>Bounty</strong> on the Quests tab to earn a token.</div>`}
       </div>
       ${delveLootHtml}`;
     return;
