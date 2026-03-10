@@ -310,7 +310,7 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
   <!-- QUESTS collapsible -->
   <div class="ritual-section-hdr" style="cursor:pointer;user-select:none" onclick="toggleSection('quests')">
     <div style="display:flex;align-items:center;gap:8px;flex:1">
-      <div class="ritual-hdr-title">⚔️ Quests</div>
+      <div class="ritual-hdr-title" style="color:var(--gold)">⚔️ Quests</div>
       <span id="questsBadge" style="font-size:.72rem;color:var(--muted);font-weight:400"></span>
     </div>
     <span id="questsChevron" style="color:var(--muted);font-size:.85rem">▾</span>
@@ -328,6 +328,27 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
       <div style="display:flex;gap:8px">
         <button class="btn btn-p" onclick="addHabit()">Add</button>
         <button class="btn btn-ghost" onclick="toggleAddForm()">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <!-- RITUALS collapsible -->
+  <div class="ritual-section-hdr" style="cursor:pointer;user-select:none;margin-top:4px" onclick="toggleSection('rituals')">
+    <div style="display:flex;align-items:center;gap:8px;flex:1">
+      <div class="ritual-hdr-title">🌑 Rituals</div>
+      <span id="ritualsBadge" style="font-size:.72rem;color:var(--muted);font-weight:400"></span>
+    </div>
+    <span id="ritualsChevron" style="color:var(--muted);font-size:.85rem">▾</span>
+  </div>
+  <div id="ritualsBody">
+    <div class="ritual-list" id="ritualList"></div>
+    <button class="add-ritual-btn" onclick="toggleRitualForm()">✦ Add new ritual</button>
+    <div class="add-form ritual-form card" id="ritualForm">
+      <div style="font-weight:600;margin-bottom:10px;color:#a855f7">✦ Bind a New Ritual</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">Start with an emoji to set the icon: <span style="color:var(--text)">🕯️ Evening meditation</span></div>
+      <input class="form-input" id="ritualName" placeholder="🕯️ Evening meditation" style="width:100%;margin-bottom:9px;box-sizing:border-box"/>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-p" onclick="addRitual()" style="background:#7c3aed">Bind Ritual</button>
+        <button class="btn btn-ghost" onclick="toggleRitualForm()">Cancel</button>
       </div>
     </div>
   </div>
@@ -350,27 +371,6 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
       <div style="display:flex;gap:8px">
         <button class="btn btn-p" onclick="addBounty()" style="background:#0369a1">Add</button>
         <button class="btn btn-ghost" onclick="toggleBountyForm()">Cancel</button>
-      </div>
-    </div>
-  </div>
-  <!-- RITUALS collapsible -->
-  <div class="ritual-section-hdr" style="cursor:pointer;user-select:none;margin-top:4px" onclick="toggleSection('rituals')">
-    <div style="display:flex;align-items:center;gap:8px;flex:1">
-      <div class="ritual-hdr-title">🌑 Rituals</div>
-      <span id="ritualsBadge" style="font-size:.72rem;color:var(--muted);font-weight:400"></span>
-    </div>
-    <span id="ritualsChevron" style="color:var(--muted);font-size:.85rem">▾</span>
-  </div>
-  <div id="ritualsBody">
-    <div class="ritual-list" id="ritualList"></div>
-    <button class="add-ritual-btn" onclick="toggleRitualForm()">✦ Add new ritual</button>
-    <div class="add-form ritual-form card" id="ritualForm">
-      <div style="font-weight:600;margin-bottom:10px;color:#a855f7">✦ Bind a New Ritual</div>
-      <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">Start with an emoji to set the icon: <span style="color:var(--text)">🕯️ Evening meditation</span></div>
-      <input class="form-input" id="ritualName" placeholder="🕯️ Evening meditation" style="width:100%;margin-bottom:9px;box-sizing:border-box"/>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-p" onclick="addRitual()" style="background:#7c3aed">Bind Ritual</button>
-        <button class="btn btn-ghost" onclick="toggleRitualForm()">Cancel</button>
       </div>
     </div>
   </div>
