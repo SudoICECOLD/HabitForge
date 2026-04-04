@@ -225,6 +225,16 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
 .delve-result-row:last-child{border-bottom:none;}
 .delve-locked{text-align:center;padding:40px 20px;color:var(--muted);}
 .delve-locked-icon{font-size:3rem;margin-bottom:10px;}
+.dmap-wrap{position:relative;margin:0 auto;user-select:none;}
+.dmap-node{position:absolute;width:40px;height:40px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s;font-size:1.1rem;}
+.dmap-node.avail{cursor:pointer;}.dmap-node.avail:hover{transform:scale(1.18);}
+.delve-hp-bar{background:var(--bg);border:1px solid var(--border);border-radius:6px;height:10px;overflow:hidden;margin-bottom:8px;}
+.delve-hp-fill{height:100%;border-radius:6px;transition:width .4s ease;}
+.dmap-legend{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px;}
+.dmap-leg-item{display:flex;align-items:center;gap:4px;font-size:.7rem;color:var(--muted);}
+.dmap-merchant-item{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.dmap-event-choice{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:10px 14px;text-align:left;cursor:pointer;font-size:.82rem;color:var(--text);margin-bottom:7px;transition:border-color .15s;}
+.dmap-event-choice:hover{border-color:var(--accent2);}
 
 /* ===== UPGRADES TAB ===== */
 .upg-list{display:flex;flex-direction:column;gap:9px;}
@@ -641,6 +651,61 @@ const DELVE_DEBUFFS = [
   {id:'fogofwar',name:'Fog of War',icon:'🌫️', desc:'Enemy roster is hidden — you commit blind'},
 ];
 
+const NODE_TYPE_INFO = {
+  fight:    {icon:'⚔️', color:'#7a2a2a', label:'Enemy'},
+  elite:    {icon:'💀', color:'#9a1a4a', label:'Elite'},
+  merchant: {icon:'🏪', color:'#92400e', label:'Merchant'},
+  campfire: {icon:'🔥', color:'#b45309', label:'Campfire'},
+  event:    {icon:'❓', color:'#1e40af', label:'Event'},
+  boss:     {icon:'👑', color:'#7c3aed', label:'Boss'},
+};
+
+const DELVE_EVENTS = [
+  {id:'shrine', icon:'🏛️', title:'Ancient Shrine', desc:'A glowing altar pulses with energy.',
+    choices:[
+      {label:'🙏 Pray',       sub:'+20 WIS this run',          effect:{type:'buff',stat:'wis',val:20}},
+      {label:'💥 Smash it',   sub:'Take 20% max HP as damage',  effect:{type:'damage',pct:0.20}},
+      {label:'🚶 Leave',      sub:'Nothing happens',            effect:{type:'skip'}},
+    ]},
+  {id:'fountain', icon:'⛲', title:'Healing Fountain', desc:'Crystal water flows from ancient stone.',
+    choices:[
+      {label:'💧 Drink deep',  sub:'Restore 35% max HP',        effect:{type:'heal',pct:0.35}},
+      {label:'🚶 Pass by',     sub:'Nothing happens',           effect:{type:'skip'}},
+    ]},
+  {id:'tome', icon:'📖', title:'Cursed Tome', desc:'Dark knowledge seeps from the pages.',
+    choices:[
+      {label:'📖 Read it',     sub:'+25 STR, lose 15% HP',      effect:{type:'trade',buffStat:'str',buffVal:25,dmgPct:0.15}},
+      {label:'🔥 Burn it',     sub:'Nothing happens',           effect:{type:'skip'}},
+    ]},
+  {id:'cache', icon:'💎', title:'Hidden Cache', desc:'A loose stone hides a small treasure.',
+    choices:[
+      {label:'🎁 Take loot',   sub:'Roll a dungeon item',       effect:{type:'loot'}},
+      {label:'🚶 Leave it',    sub:'Nothing happens',           effect:{type:'skip'}},
+    ]},
+  {id:'gamble', icon:'🎲', title:'Wandering Gambler', desc:'"Double or nothing?" he grins.',
+    choices:[
+      {label:'🎲 Take the bet',sub:'50/50: +30 STR or −25% HP', effect:{type:'gamble'}},
+      {label:'🚶 Walk past',   sub:'Nothing happens',           effect:{type:'skip'}},
+    ]},
+  {id:'duel', icon:'🤺', title:'Duelist\'s Challenge', desc:'A masked warrior blocks your path.',
+    choices:[
+      {label:'⚔️ Accept duel', sub:'+30 DEX if you win (70%)',  effect:{type:'duel'}},
+      {label:'🏃 Back down',   sub:'Nothing happens',           effect:{type:'skip'}},
+    ]},
+];
+
+function getDelveShopStock(){
+  return [
+    {id:'str20',  label:"Berserker's Draught",  desc:'+20 STR this run',            cost:90,  effect:{type:'buff',stat:'str',val:20}},
+    {id:'dex20',  label:'Shadow Oil',           desc:'+20 DEX this run',            cost:90,  effect:{type:'buff',stat:'dex',val:20}},
+    {id:'wis20',  label:'Sage Water',           desc:'+20 WIS this run',            cost:90,  effect:{type:'buff',stat:'wis',val:20}},
+    {id:'heal40', label:'Healing Potion',       desc:'Restore 40% max HP now',      cost:70,  effect:{type:'heal',pct:0.40}},
+    {id:'loot',   label:'Lucky Charm',          desc:'+25% loot chance this run',   cost:110, effect:{type:'loot_odds',val:25}},
+    {id:'rarity', label:"Fortune's Stone",      desc:'Loot upgrades 1 rarity tier', cost:150, effect:{type:'loot_rar',val:1}},
+    {id:'phylac', label:'Phylactery',           desc:'Survive death once, keep pot',cost:200, effect:{type:'phylactery'}},
+  ];
+}
+
 const ACHIEVEMENTS = {
   first_quest: {name:'First Blood', icon:'⚔️', desc:'Complete your first quest'},
   week_warrior: {name:'Week Warrior', icon:'🔥', desc:'Reach a 7-day streak'},
@@ -739,7 +804,7 @@ function defaults(){
     dailyBuff:{date:'',id:''},
     lootLog:[],
     ownedPets:[],
-    delve:{lastDate:'',active:false,floor:0,pot:[],potRarityBonus:0,buffStats:{str:0,dex:0,wis:0},lootChanceBonus:0,hasPhylactery:false,activeDebuff:null,nextDebuff:null,state:'idle',lastResult:null,lastBuff:null,lastLoot:null,bestFloor:0},
+    delve:{state:'idle',map:null,currentNode:null,visitedNodes:[],runHp:0,runHpMax:0,pot:[],potRarityBonus:0,buffStats:{str:0,dex:0,wis:0},lootChanceBonus:0,hasPhylactery:false,activeDebuff:null,lastResult:null,nodeData:null,bestFloor:0},
     delveLootLog:[],
   };
 }
@@ -767,6 +832,14 @@ let S = (()=>{
       lootLog:saved.lootLog||[],
       delveLootLog:saved.delveLootLog||[],
       ownedPets:saved.ownedPets||[],
+      delve:{
+        ...defaults().delve,
+        ...(saved.delve||{}),
+        // Reset any in-progress old-format runs (no map = old format)
+        ...((saved.delve&&!saved.delve.map&&saved.delve.state!=='idle')?{state:'idle',currentNode:null,visitedNodes:[],runHp:0,runHpMax:0,nodeData:null}:{}),
+        bestFloor:(saved.delve&&saved.delve.bestFloor)||0,
+        pot:(saved.delve&&saved.delve.pot)||[],
+      },
     };
   }catch{return defaults();}
 })();
@@ -2080,13 +2153,14 @@ function getFloorEnemies(floor){
   }));
 }
 
-function resolveCombat(pStr,pDex,pWis,enemies,debuff){
+function resolveCombat(pStr,pDex,pWis,enemies,debuff,startHp,startHpMax){
   let eStr=enemies.reduce((s,e)=>s+e.str,0);
   let eDex=enemies.reduce((s,e)=>s+e.dex,0);
   let eWis=enemies.reduce((s,e)=>s+e.wis,0);
   let effWis=debuff==='blind'?Math.max(1,Math.floor(pWis*0.5)):pWis;
   let effDex=debuff==='hexed'?0:pDex;
-  let pHp=100+pStr+pDex+pWis, eHp=(eStr+eDex+eWis)*2;
+  const pHpMax=(startHpMax!==undefined)?startHpMax:100+pStr+pDex+pWis;
+  let pHp=(startHp!==undefined&&startHp>0)?startHp:pHpMax, eHp=(eStr+eDex+eWis)*2;
   let phits=0,pmisses=0,pcrits=0,ehits=0,emisses=0,pDmgTotal=0,eDmgTotal=0;
   for(let r=0;r<30&&pHp>0&&eHp>0;r++){
     const hitP=Math.min(0.92,Math.max(0.25,effWis/(effWis+eDex+10)));
@@ -2103,7 +2177,7 @@ function resolveCombat(pStr,pDex,pWis,enemies,debuff){
       pHp-=dmg; eDmgTotal+=dmg; ehits++;
     } else emisses++;
   }
-  return{win:eHp<=0,phits,pmisses,pcrits,ehits,emisses,pDmgTotal,eDmgTotal,pHp:Math.max(0,Math.round(pHp)),pHpMax:100+pStr+pDex+pWis};
+  return{win:eHp<=0,phits,pmisses,pcrits,ehits,emisses,pDmgTotal,eDmgTotal,pHp:Math.max(0,Math.round(pHp)),pHpMax};
 }
 
 function rollDelveLoot(floor,rarityBonus,lootChanceBonus){
@@ -2146,67 +2220,109 @@ function upgradeLootRarity(item,times){
   return item;
 }
 
-function enterDelve(){
-  const lvl=getLvlInfo().lvl.level;
-  if(lvl<5){ toast('🔒 Reach Level 5 to enter the Dungeon',''); return; }
-  if(!(S.delveTokens>0)){ toast('🎫 No Delve Tokens — complete a Bounty to earn one!',''); return; }
-  S.delveTokens--;
-  const D=S.delve;
-  D.active=true; D.floor=1; D.pot=[]; D.potRarityBonus=0;
-  D.buffStats={str:0,dex:0,wis:0}; D.lootChanceBonus=0; D.hasPhylactery=false;
-  D.activeDebuff=null; D.nextDebuff=null; D.state='fighting';
-  D.lastResult=null; D.lastBuff=null; D.lastLoot=null; D._nextEnemies=null;
+function generateDelveMap(){
+  const LAYOUT=[
+    ['fight','fight','fight'],       // row 0 — starting choices
+    ['fight','event','fight'],        // row 1
+    ['campfire','fight','merchant'],  // row 2 — guaranteed rest/shop path
+    ['fight','elite','fight'],        // row 3
+    ['elite','fight','elite'],        // row 4
+    [null,'boss',null],               // row 5 — boss
+  ];
+  const nodes={}, edges=[];
+  for(let row=0;row<6;row++){
+    const rl=[...LAYOUT[row]];
+    if(row<5){ // shuffle types within row
+      const idxs=rl.map((t,i)=>i).filter(i=>rl[i]!==null);
+      const types=idxs.map(i=>rl[i]);
+      for(let i=types.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[types[i],types[j]]=[types[j],types[i]];}
+      idxs.forEach((idx,i)=>rl[idx]=types[i]);
+    }
+    for(let col=0;col<3;col++){
+      if(!rl[col]) continue;
+      const id=`r${row}c${col}`, type=rl[col];
+      const floor=row+1+(type==='elite'?2:0)+(type==='boss'?5:0);
+      nodes[id]={id,row,col,type,state:row===0?'available':'locked',
+        enemies:['fight','elite','boss'].includes(type)?getFloorEnemies(floor):null,
+        event:type==='event'?DELVE_EVENTS[Math.floor(Math.random()*DELVE_EVENTS.length)]:null,
+        shopStock:type==='merchant'?getDelveShopStock():null,
+      };
+    }
+  }
+  for(let row=0;row<5;row++){
+    const cur=Object.values(nodes).filter(n=>n.row===row);
+    const nxt=Object.values(nodes).filter(n=>n.row===row+1);
+    cur.forEach(n=>{
+      const sorted=[...nxt].sort((a,b)=>Math.abs(a.col-n.col)-Math.abs(b.col-n.col));
+      const cnt=n.col===1?Math.min(2,sorted.length):1;
+      for(let i=0;i<cnt;i++) if(!edges.find(e=>e.from===n.id&&e.to===sorted[i].id)) edges.push({from:n.id,to:sorted[i].id});
+    });
+    nxt.forEach(n=>{
+      if(!edges.some(e=>e.to===n.id)){
+        const cl=[...cur].sort((a,b)=>Math.abs(a.col-n.col)-Math.abs(b.col-n.col))[0];
+        if(cl&&!edges.find(e=>e.from===cl.id&&e.to===n.id)) edges.push({from:cl.id,to:n.id});
+      }
+    });
+  }
+  return{nodes,edges};
+}
+
+function enterMapNode(nodeId){
+  const D=S.delve, node=D.map.nodes[nodeId];
+  if(!node||node.state!=='available') return;
+  D.currentNode=nodeId; node.state='current';
+  if(!D.visitedNodes) D.visitedNodes=[];
+  D.visitedNodes.push(nodeId);
+  Object.values(D.map.nodes).filter(n=>n.row===node.row&&n.id!==nodeId&&n.state==='available').forEach(n=>n.state='locked');
+  const s={'fight':'node_fight','elite':'node_fight','boss':'node_fight','merchant':'node_merchant','campfire':'node_campfire','event':'node_event'};
+  D.state=s[node.type]||'node_fight';
   save(); renderDelve();
 }
 
-function fightFloor(){
-  // Fade to black, resolve combat behind the curtain, reveal result
-  playSwordClash(); // fires immediately as screen goes dark
+function completeMapNode(){
+  const D=S.delve, node=D.map.nodes[D.currentNode];
+  node.state='visited';
+  if(node.row+1>(D.bestFloor||0)) D.bestFloor=node.row+1;
+  const nextIds=D.map.edges.filter(e=>e.from===D.currentNode).map(e=>e.to);
+  nextIds.forEach(id=>{if(D.map.nodes[id]&&D.map.nodes[id].state==='locked') D.map.nodes[id].state='available';});
+  D.state=node.type==='boss'?'escaped':'map';
+  D.currentNode=null; D.nodeData=null; D.lastResult=null;
+  save(); renderDelve();
+}
+
+function fightMapNode(){
+  playSwordClash();
   const veil=document.createElement('div');
   veil.style.cssText='position:fixed;inset:0;background:#000;opacity:0;z-index:9999;transition:opacity 0.55s ease;pointer-events:all;';
   document.body.appendChild(veil);
-  requestAnimationFrame(()=>{ veil.style.opacity='1'; });
-
+  requestAnimationFrame(()=>{veil.style.opacity='1';});
   setTimeout(()=>{
-    const D=S.delve;
+    const D=S.delve, node=D.map.nodes[D.currentNode];
     const rs=getRaidStats();
-    const pStr=rs.str+(D.buffStats.str||0);
-    const pDex=rs.dex+(D.buffStats.dex||0);
-    const pWis=rs.wis+(D.buffStats.wis||0);
-    const fogOfWar=D.activeDebuff&&D.activeDebuff.id==='fogofwar';
-    const enemies=fogOfWar?getFloorEnemies(D.floor):D._nextEnemies||getFloorEnemies(D.floor);
-    const result=resolveCombat(pStr,pDex,pWis,enemies,D.activeDebuff?D.activeDebuff.id:null);
-    D.lastResult={...result,enemies:[...enemies]};
-
+    const pStr=rs.str+(D.buffStats.str||0), pDex=rs.dex+(D.buffStats.dex||0), pWis=rs.wis+(D.buffStats.wis||0);
+    const enemies=node.enemies||getFloorEnemies(node.row+1);
+    const result=resolveCombat(pStr,pDex,pWis,enemies,D.activeDebuff?D.activeDebuff.id:null,D.runHp,D.runHpMax);
+    D.lastResult={...result,enemies:[...enemies],nodeType:node.type};
     if(!result.win){
       if(D.hasPhylactery){
-        D.hasPhylactery=false;
-        result.win=true; D.lastResult.win=true; D.lastResult.phylactery=true;
+        D.hasPhylactery=false; result.win=true; D.lastResult.win=true; D.lastResult.phylactery=true;
+        D.runHp=Math.max(1,Math.round(D.runHpMax*0.15));
       } else {
-        D.state='dead'; D.active=false; D.lastDate=today(); D.pot=[]; save();
+        D.state='dead'; D.pot=[]; save();
       }
     }
-
     if(result.win){
-      if(D.floor>(D.bestFloor||0)) D.bestFloor=D.floor;
-      const loot=rollDelveLoot(D.floor,D.potRarityBonus,D.lootChanceBonus);
+      D.runHp=result.pHp;
+      const floor=node.row+1+(node.type==='elite'?2:0)+(node.type==='boss'?4:0);
+      const loot=rollDelveLoot(floor,D.potRarityBonus,D.lootChanceBonus);
       if(loot){
         if(D.potRarityBonus>0) upgradeLootRarity(loot,D.potRarityBonus);
-        // Replace a same-slot pot item only if this is strictly higher rarity; otherwise add
-        const sameSlotIdx=D.pot.findIndex(p=>p.slot===loot.slot&&RARITIES.indexOf(p.rarity)<RARITIES.indexOf(loot.rarity));
-        if(sameSlotIdx>=0) D.pot[sameSlotIdx]=loot;
-        else D.pot.push(loot);
+        const si=D.pot.findIndex(p=>p.slot===loot.slot&&RARITIES.indexOf(p.rarity)<RARITIES.indexOf(loot.rarity));
+        if(si>=0) D.pot[si]=loot; else D.pot.push(loot);
       }
-      D.lastLoot=loot;
-      D.lastBuff=null; D.nextDebuff=null;
-      D._nextEnemies=getFloorEnemies(D.floor+1);
-      if(Math.random()<0.25) D.nextDebuff=DELVE_DEBUFFS[Math.floor(Math.random()*DELVE_DEBUFFS.length)];
-      else D.lastBuff=rollDelveBuff();
-      D.state='result';
+      D.lastResult.loot=loot; D.state='result';
     }
     save(); renderDelve();
-
-    // Fade back in — sounds fire as result is revealed, not before
     setTimeout(()=>{
       veil.style.opacity='0';
       const r=D.lastResult;
@@ -2214,12 +2330,81 @@ function fightFloor(){
         if(r.phylactery) playPhylactery();
         else if(r.win) playVictory();
         else playDeath();
-        if(r.win&&D.lastLoot) setTimeout(()=>playLootDrop(),350);
-        if(r.phylactery) toast("💀 The Phylactery shattered — death averted!",'tl');
+        if(r.win&&r.loot) setTimeout(()=>playLootDrop(),350);
+        if(r.phylactery) toast('💀 The Phylactery shattered — death averted!','tl');
       }
-      setTimeout(()=>veil.remove(), 600);
-    }, 150);
-  }, 650);
+      setTimeout(()=>veil.remove(),600);
+    },150);
+  },650);
+}
+
+function merchantBuy(stockIdx){
+  const D=S.delve, node=D.map.nodes[D.currentNode];
+  const item=(node.shopStock||[])[stockIdx];
+  if(!item) return;
+  if(S.gold<item.cost){toast('Not enough gold!','');return;}
+  S.gold-=item.cost;
+  const e=item.effect;
+  if(e.type==='buff') D.buffStats[e.stat]=(D.buffStats[e.stat]||0)+e.val;
+  else if(e.type==='heal') D.runHp=Math.min(D.runHpMax,D.runHp+Math.round(D.runHpMax*e.pct));
+  else if(e.type==='loot_odds') D.lootChanceBonus=(D.lootChanceBonus||0)+e.val;
+  else if(e.type==='loot_rar') D.potRarityBonus=(D.potRarityBonus||0)+e.val;
+  else if(e.type==='phylactery') D.hasPhylactery=true;
+  node.shopStock.splice(stockIdx,1);
+  toast(`🛒 Purchased: ${item.label}`,'tg');
+  updateHeader(); save(); renderDelve();
+}
+
+function campfireRest(){
+  const D=S.delve;
+  D.runHp=Math.min(D.runHpMax,D.runHp+Math.round(D.runHpMax*0.45));
+  toast('🔥 Rested — HP restored','tg'); completeMapNode();
+}
+function campfireTrain(){
+  const D=S.delve;
+  const cost=Math.round(D.runHpMax*0.15);
+  if(D.runHp<=cost+1){toast('Not enough HP to train safely!','');return;}
+  D.runHp-=cost; D.buffStats.str=(D.buffStats.str||0)+20;
+  toast('⚔️ Trained hard — +20 STR, cost some HP','tg'); completeMapNode();
+}
+function campfireLeave(){ completeMapNode(); }
+function merchantLeave(){ completeMapNode(); }
+
+function resolveEventChoice(choiceIdx){
+  const D=S.delve, node=D.map.nodes[D.currentNode];
+  const ev=node.event, choice=ev.choices[choiceIdx], e=choice.effect;
+  if(e.type==='buff'){D.buffStats[e.stat]=(D.buffStats[e.stat]||0)+e.val;toast(`${ev.icon} ${choice.label} — applied!`,'tg');}
+  else if(e.type==='heal'){D.runHp=Math.min(D.runHpMax,D.runHp+Math.round(D.runHpMax*e.pct));toast('💧 HP restored','tg');}
+  else if(e.type==='damage'){D.runHp=Math.max(1,D.runHp-Math.round(D.runHpMax*e.pct));toast('💥 Took damage!','');}
+  else if(e.type==='trade'){D.buffStats[e.buffStat]=(D.buffStats[e.buffStat]||0)+e.buffVal;D.runHp=Math.max(1,D.runHp-Math.round(D.runHpMax*e.dmgPct));toast(`${ev.icon} Trade made`,'tg');}
+  else if(e.type==='loot'){
+    const loot=rollDelveLoot(node.row+1,D.potRarityBonus,D.lootChanceBonus);
+    if(loot){const si=D.pot.findIndex(p=>p.slot===loot.slot&&RARITIES.indexOf(p.rarity)<RARITIES.indexOf(loot.rarity));if(si>=0)D.pot[si]=loot;else D.pot.push(loot);toast(`🎁 Found: ${loot.name}`,'tg');}
+    else toast('Nothing was there.','');
+  }
+  else if(e.type==='gamble'){
+    if(Math.random()<0.5){D.buffStats.str=(D.buffStats.str||0)+30;toast('🎲 You won! +30 STR','tg');}
+    else{D.runHp=Math.max(1,D.runHp-Math.round(D.runHpMax*0.25));toast('🎲 You lost! Took damage','');}
+  }
+  else if(e.type==='duel'){
+    if(Math.random()<0.70){D.buffStats.dex=(D.buffStats.dex||0)+30;toast('🤺 You won the duel! +30 DEX','tg');}
+    else{D.runHp=Math.max(1,D.runHp-Math.round(D.runHpMax*0.20));toast('🤺 You lost the duel! Took damage','');}
+  }
+  completeMapNode();
+}
+
+function enterDelve(){
+  const lvl=getLvlInfo().lvl.level;
+  if(lvl<5){toast('🔒 Reach Level 5 to enter the Dungeon','');return;}
+  if(!(S.delveTokens>0)){toast('🎫 No Delve Tokens — complete a Bounty to earn one!','');return;}
+  S.delveTokens--;
+  const D=S.delve, rs=getRaidStats();
+  D.runHpMax=100+rs.str+rs.dex+rs.wis; D.runHp=D.runHpMax;
+  D.map=generateDelveMap(); D.currentNode=null; D.visitedNodes=[];
+  D.pot=[]; D.potRarityBonus=0; D.buffStats={str:0,dex:0,wis:0};
+  D.lootChanceBonus=0; D.hasPhylactery=false; D.activeDebuff=null;
+  D.lastResult=null; D.nodeData=null; D.state='map';
+  save(); renderDelve();
 }
 
 function claimAndLeave(){
@@ -2227,110 +2412,104 @@ function claimAndLeave(){
   if(D.pot.length){
     D.pot.forEach(item=>{
       S.inventory.push({...item});
-      // Log to delve loot log
       if(!S.delveLootLog) S.delveLootLog=[];
-      S.delveLootLog.unshift({item:{icon:item.icon,name:item.name,rarity:item.rarity},floor:D.floor,date:new Date().toISOString()});
+      S.delveLootLog.unshift({item:{icon:item.icon,name:item.name,rarity:item.rarity},floor:D.bestFloor||1,date:new Date().toISOString()});
       if(S.delveLootLog.length>30) S.delveLootLog.pop();
-      // Also feed into general loot log
       if(!S.lootLog) S.lootLog=[];
       S.lootLog.unshift({source:'delve',sourceName:'Dungeon Delve',item:{icon:item.icon,name:item.name,rarity:item.rarity},date:new Date().toISOString()});
       if(S.lootLog.length>30) S.lootLog.pop();
     });
-    const names=D.pot.map(i=>i.name).join(', ');
-    toast(`🏆 Escaped with: ${names}!`,'tg');
+    toast(`🏆 Escaped with: ${D.pot.map(i=>i.name).join(', ')}!`,'tg');
   } else toast('Left the dungeon empty-handed.','');
-  D.state='idle'; D.active=false; D.lastDate=today(); D.pot=[]; save(); renderDelve(); renderCharacter();
+  D.state='idle'; D.map=null; D.pot=[]; D.currentNode=null; D.visitedNodes=[];
+  save(); renderDelve(); renderCharacter();
 }
 
-function proceedFloor(){
-  const D=S.delve;
-  // Apply the buff earned on last floor
-  if(D.lastBuff){
-    // Handle cursed debuff: cancel a random existing buff
-    if(D.activeDebuff&&D.activeDebuff.id==='cursed'){
-      const buffKeys=Object.keys(D.buffStats).filter(k=>D.buffStats[k]>0);
-      if(buffKeys.length){ const k=buffKeys[Math.floor(Math.random()*buffKeys.length)]; D.buffStats[k]=0; toast('🌀 Cursed! A buff was cancelled.',''); }
-      else if(D.hasPhylactery){ D.hasPhylactery=false; toast('🌀 Cursed! Phylactery shattered.',''); }
-    }
-    applyDelveBuff(D.lastBuff);
-  }
-  D.floor++;
-  D.activeDebuff=D.nextDebuff||null;
-  D.nextDebuff=null; D.lastResult=null; D.lastBuff=null; D.lastLoot=null;
-  D.state='fighting'; save(); renderDelve();
+function _delveHpBar(D){
+  const pct=D.runHpMax>0?Math.max(0,D.runHp/D.runHpMax):0;
+  const col=pct>0.50?'#10b981':pct>0.25?'#f59e0b':'#ef4444';
+  return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+    <span style="font-size:.72rem;color:var(--muted);white-space:nowrap">❤️ ${D.runHp} / ${D.runHpMax}</span>
+    <div class="delve-hp-bar" style="flex:1"><div class="delve-hp-fill" style="width:${Math.round(pct*100)}%;background:${col}"></div></div>
+  </div>`;
+}
+function _delveBuffChips(D){
+  const b=[];
+  if((D.buffStats.str||0)>0) b.push(`⚔️ +${D.buffStats.str}`);
+  if((D.buffStats.dex||0)>0) b.push(`🏹 +${D.buffStats.dex}`);
+  if((D.buffStats.wis||0)>0) b.push(`🧠 +${D.buffStats.wis}`);
+  if(D.hasPhylactery) b.push('💀 Phylactery');
+  if(D.lootChanceBonus>0) b.push(`✨ +${D.lootChanceBonus}% loot`);
+  if(D.potRarityBonus>0) b.push(`💎 +${D.potRarityBonus} rarity`);
+  return b.length?`<div class="delve-buffs">${b.map(x=>`<span class="delve-buff-chip">${x}</span>`).join('')}</div>`:'';
+}
+function _delvePotHtml(D){
+  return D.pot.length
+    ?`<div class="delve-pot" style="flex-direction:column;align-items:stretch;gap:4px">${D.pot.map(i=>`<div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.2rem">${i.icon}</span><div><div style="font-weight:600;color:${RCOL[i.rarity]}">${i.name}</div><div style="font-size:.72rem;color:var(--muted)">${RLBL[i.rarity]} · in pot</div></div></div>`).join('')}</div>`
+    :`<div class="delve-pot delve-pot-empty"><span>📦</span><span style="color:var(--muted)">Pot is empty</span></div>`;
+}
+
+function _renderDelveMap(D){
+  const CW=70, RH=70, MW=210, MH=6*RH+30;
+  const nx=col=>35+col*CW, ny=row=>MH-15-row*RH-RH/2;
+  let svg='';
+  D.map.edges.forEach(({from,to})=>{
+    const fn=D.map.nodes[from],tn=D.map.nodes[to];
+    if(!fn||!tn) return;
+    const onPath=fn.state==='visited';
+    const toAvail=tn.state==='available';
+    const col=toAvail?'#a855f7':onPath?'#4a3a6a':'#252535';
+    const w=toAvail?2.5:1.5, dash=onPath||toAvail?'none':'5,4';
+    svg+=`<line x1="${nx(fn.col)}" y1="${ny(fn.row)}" x2="${nx(tn.col)}" y2="${ny(tn.row)}" stroke="${col}" stroke-width="${w}" stroke-dasharray="${dash}" stroke-linecap="round"/>`;
+  });
+  let ndHtml='';
+  Object.values(D.map.nodes).forEach(node=>{
+    const info=NODE_TYPE_INFO[node.type];
+    const x=nx(node.col)-20, y=ny(node.row)-20;
+    const s=node.state;
+    let style='';
+    if(s==='available') style=`border-color:${info.color};background:${info.color}33;cursor:pointer;box-shadow:0 0 10px ${info.color}88`;
+    else if(s==='current') style=`border-color:var(--gold);background:#1a140088;box-shadow:0 0 12px #f59e0baa`;
+    else if(s==='visited') style='border-color:#3a3a5a;background:#1a1a2a;opacity:0.45';
+    else style='border-color:#1e1e32;background:#0d0d18;opacity:0.25';
+    ndHtml+=`<div class="dmap-node${s==='available'?' avail':''}" style="left:${x}px;top:${y}px;${style}" ${s==='available'?`onclick="enterMapNode('${node.id}')"`:''}  title="${info.label}"><span>${info.icon}</span></div>`;
+  });
+  // Row labels (Boss at top, Depths at bottom)
+  const rowLabels=['Start','Passage','Crossroads','Deep','Abyss','⚔️ Boss'];
+  let labelHtml='';
+  for(let r=0;r<6;r++) labelHtml+=`<div style="position:absolute;left:${MW+6}px;top:${ny(r)-8}px;font-size:.6rem;color:var(--muted);white-space:nowrap">${rowLabels[r]}</div>`;
+  return `<div class="dmap-wrap" style="width:${MW+80}px;height:${MH}px">
+    <svg width="${MW}" height="${MH}" style="position:absolute;top:0;left:0;pointer-events:none">${svg}</svg>
+    ${ndHtml}${labelHtml}
+  </div>`;
 }
 
 function renderDelve(){
-  const D=S.delve;
-  const lvl=getLvlInfo().lvl.level;
+  const D=S.delve, lvl=getLvlInfo().lvl.level;
   const el=document.getElementById('delveMain');
   if(!el) return;
-
-  // Locked
-  if(lvl<5){
-    el.innerHTML=`<div class="delve-locked"><div class="delve-locked-icon">🔒</div><div style="font-weight:700;font-size:1rem;margin-bottom:6px">Dungeon Locked</div><div style="font-size:.85rem">Reach <strong>Level 5</strong> to unlock the Dungeon.</div></div>`;
-    return;
-  }
-
+  if(lvl<5){el.innerHTML=`<div class="delve-locked"><div class="delve-locked-icon">🔒</div><div style="font-weight:700;font-size:1rem;margin-bottom:6px">Dungeon Locked</div><div style="font-size:.85rem">Reach <strong>Level 5</strong> to unlock the Dungeon.</div></div>`;return;}
   const rs=getRaidStats();
-  const pStr=rs.str+(D.buffStats.str||0);
-  const pDex=rs.dex+(D.buffStats.dex||0);
-  const pWis=rs.wis+(D.buffStats.wis||0);
-
-  // Floor progress dots — sliding 10-dot window showing recent floors
-  const dotWindow=10;
-  const dotStart=Math.max(1,D.floor-dotWindow+1);
-  const dots=Array.from({length:dotWindow},(_,i)=>{
-    const f=dotStart+i;
-    const cls=f<D.floor?'done':f===D.floor&&D.active?'active':'';
-    return `<div class="delve-dot ${cls}" title="Floor ${f}"></div>`;
-  }).join('')+(D.floor>dotWindow?`<div style="font-size:.6rem;color:var(--muted);padding:0 3px;align-self:center">F${D.floor}</div>`:'');
-
-  // Active buffs display
-  const buffList=[];
-  if(D.buffStats.str>0) buffList.push(`⚔️ +${D.buffStats.str} STR`);
-  if(D.buffStats.dex>0) buffList.push(`🏹 +${D.buffStats.dex} DEX`);
-  if(D.buffStats.wis>0) buffList.push(`🧠 +${D.buffStats.wis} WIS`);
-  if(D.hasPhylactery)   buffList.push(`💀 Phylactery`);
-  if(D.lootChanceBonus>0) buffList.push(`✨ +${D.lootChanceBonus}% loot`);
-  if(D.potRarityBonus>0)  buffList.push(`💎 +${D.potRarityBonus} rarity`);
-  const buffHtml=buffList.length?`<div class="delve-buffs">${buffList.map(b=>`<span class="delve-buff-chip">${b}</span>`).join('')}</div>`:'';
-
-  // Pot display
-  const potHtml=D.pot.length
-    ?`<div class="delve-pot" style="flex-direction:column;align-items:stretch;gap:4px">${D.pot.map(item=>`<div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.2rem">${item.icon}</span><div><div style="font-weight:600;color:${RCOL[item.rarity]}">${item.name}</div><div style="font-size:.72rem;color:var(--muted)">${RLBL[item.rarity]} · in the pot</div></div></div>`).join('')}</div>`
-    :`<div class="delve-pot delve-pot-empty"><span>📦</span><span style="color:var(--muted)">Pot is empty — nothing to claim yet</span></div>`;
 
   // ── IDLE ──
   if(D.state==='idle'){
     const tokens=S.delveTokens||0;
-    // Delve loot log
     const dll=S.delveLootLog||[];
-    let delveLootHtml='';
-    if(dll.length){
-      delveLootHtml=`<div class="loot-history-section" style="margin-top:12px"><div class="sec">Dungeon Loot</div><div>`;
-      dll.slice(0,20).forEach(entry=>{
-        const dateStr=new Date(entry.date).toLocaleDateString('en-US',{month:'short',day:'numeric'});
-        delveLootHtml+=`<div class="loot-entry"><div class="loot-entry-item">${entry.item.icon}</div><div style="flex:1"><div style="color:${RCOL[entry.item.rarity]};font-weight:700;font-size:.78rem">${RLBL[entry.item.rarity]}</div><div style="color:var(--muted);font-size:.7rem">${entry.item.name}</div></div><div style="text-align:right;color:var(--muted);font-size:.7rem"><div>⚰️ Floor ${entry.floor}</div><div>${dateStr}</div></div></div>`;
-      });
-      delveLootHtml+=`</div></div>`;
-    } else {
-      delveLootHtml=`<div class="loot-history-section" style="margin-top:12px"><div class="sec">Dungeon Loot</div><div style="color:var(--muted);font-size:.83rem;padding:8px 0">No loot claimed yet.</div></div>`;
-    }
+    let llHtml=dll.length
+      ?`<div class="loot-history-section" style="margin-top:12px"><div class="sec">Dungeon Loot</div><div>${dll.slice(0,20).map(e=>`<div class="loot-entry"><div class="loot-entry-item">${e.item.icon}</div><div style="flex:1"><div style="color:${RCOL[e.item.rarity]};font-weight:700;font-size:.78rem">${RLBL[e.item.rarity]}</div><div style="color:var(--muted);font-size:.7rem">${e.item.name}</div></div><div style="text-align:right;color:var(--muted);font-size:.7rem"><div>Tier ${e.floor}</div><div>${new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div></div></div>`).join('')}</div></div>`
+      :`<div class="loot-history-section" style="margin-top:12px"><div class="sec">Dungeon Loot</div><div style="color:var(--muted);font-size:.83rem;padding:8px 0">No loot claimed yet.</div></div>`;
     el.innerHTML=`
       <div class="delve-card">
-        <div class="delve-floor-bar">${dots}</div>
         <div style="font-size:2.5rem;margin-bottom:8px">⚰️</div>
         <div style="font-weight:800;font-size:1.1rem;color:var(--accent2);margin-bottom:6px">The Dungeon</div>
-        <div style="color:var(--muted);font-size:.83rem;margin-bottom:10px">Endless depths. Enemies scale forever. Die and lose everything.</div>
-        ${D.bestFloor?`<div style="font-size:.8rem;color:var(--gold);margin-bottom:10px">🏆 Best: Floor ${D.bestFloor}</div>`:''}
-        <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px">⚔️ STR ${rs.str} &nbsp; 🏹 DEX ${rs.dex} &nbsp; 🧠 WIS ${rs.wis}</div>
+        <div style="color:var(--muted);font-size:.83rem;margin-bottom:10px">Choose your path. Rest at campfires. Shop with merchants. Slay the boss.</div>
+        ${D.bestFloor?`<div style="font-size:.8rem;color:var(--gold);margin-bottom:10px">🏆 Best depth: Tier ${D.bestFloor}</div>`:''}
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px">⚔️ ${rs.str} &nbsp;🏹 ${rs.dex} &nbsp;🧠 ${rs.wis}</div>
         <div style="font-size:.8rem;color:#38bdf8;margin-bottom:12px">🎫 ${tokens} token${tokens!==1?'s':''} available</div>
         ${tokens>0
           ?`<button class="btn btn-p" style="width:100%;padding:12px;font-size:.95rem" onclick="enterDelve()">⚰️ Enter Dungeon (costs 1 token)</button>`
           :`<div style="background:#0f1a1f;border:1px solid #1e3a4a;border-radius:10px;padding:12px;color:#38bdf8;font-size:.85rem">Complete a <strong>Bounty</strong> on the Quests tab to earn a token.</div>`}
-      </div>
-      ${delveLootHtml}`;
+      </div>${llHtml}`;
     return;
   }
 
@@ -2338,80 +2517,152 @@ function renderDelve(){
   if(D.state==='dead'){
     el.innerHTML=`
       <div class="delve-card" style="border-color:#ef4444">
-        <div class="delve-floor-bar">${dots}</div>
         <div style="font-size:3rem;margin-bottom:8px">💀</div>
-        <div style="font-weight:800;font-size:1.1rem;color:#ef4444;margin-bottom:6px">Defeated on Floor ${D.floor}</div>
-        <div style="color:var(--muted);font-size:.83rem;margin-bottom:14px">The dungeon claimed everything. Better luck tomorrow.</div>
-        <button class="btn btn-ghost" style="width:100%" onclick="D_reset()">Return</button>
+        <div style="font-weight:800;font-size:1.1rem;color:#ef4444;margin-bottom:6px">Defeated in the Dungeon</div>
+        <div style="color:var(--muted);font-size:.83rem;margin-bottom:14px">The depths claimed everything. Earn another token to try again.</div>
+        <button class="btn btn-ghost" style="width:100%" onclick="D_reset()">Return to Entrance</button>
       </div>`;
     return;
   }
 
-  // ── FIGHTING ──
-  if(D.state==='fighting'){
-    const fogOfWar=D.activeDebuff&&D.activeDebuff.id==='fogofwar';
-    const enemies=D._nextEnemies||getFloorEnemies(D.floor);
-    if(!D._nextEnemies&&D.floor===1){ D._nextEnemies=enemies; }
-    const enemyCards=fogOfWar
-      ?`<div class="delve-enemy"><div class="delve-enemy-icon">🌫️</div><div class="delve-enemy-name">Unknown</div><div class="delve-enemy-stats">Fog of War</div></div>`
-      :enemies.map(e=>`<div class="delve-enemy"><div class="delve-enemy-icon">${e.icon}</div><div class="delve-enemy-name">${e.name}</div><div class="delve-enemy-stats">STR ${e.str} DEX ${e.dex} WIS ${e.wis}</div></div>`).join('');
-    const debuffHtml=D.activeDebuff?`<div class="delve-buffs"><span class="delve-debuff-chip">${D.activeDebuff.icon} ${D.activeDebuff.name}: ${D.activeDebuff.desc}</span></div>`:'';
+  // ── ESCAPED (boss killed) ──
+  if(D.state==='escaped'){
+    el.innerHTML=`
+      <div class="delve-card" style="border-color:#a855f7">
+        <div style="font-size:3rem;margin-bottom:8px">👑</div>
+        <div style="font-weight:800;font-size:1.1rem;color:#a855f7;margin-bottom:6px">Boss Defeated!</div>
+        <div style="color:var(--muted);font-size:.83rem;margin-bottom:12px">You've conquered the dungeon. Claim your spoils.</div>
+        ${_delvePotHtml(D)}
+        <button class="btn btn-p" style="width:100%;margin-top:10px;background:#7c3aed" onclick="claimAndLeave()">🏆 Claim & Leave</button>
+      </div>`;
+    return;
+  }
+
+  // ── MAP ──
+  if(D.state==='map'){
+    const hasStarted=(D.visitedNodes&&D.visitedNodes.length>0);
+    el.innerHTML=`
+      <div class="delve-card" style="text-align:left;padding:14px">
+        <div style="font-weight:800;color:var(--accent2);margin-bottom:6px;text-align:center">${hasStarted?'Choose Your Path':'Select a Starting Room'}</div>
+        ${_delveHpBar(D)}
+        ${_delveBuffChips(D)}
+        <div style="display:flex;justify-content:center;margin:10px 0">${_renderDelveMap(D)}</div>
+        <div class="dmap-legend">${Object.entries(NODE_TYPE_INFO).map(([k,v])=>`<div class="dmap-leg-item"><span style="font-size:.85rem">${v.icon}</span><span>${v.label}</span></div>`).join('')}</div>
+        ${_delvePotHtml(D)}
+        <button class="btn btn-ghost" style="width:100%;margin-top:10px;font-size:.78rem" onclick="claimAndLeave()">${D.pot.length?'🏃 Claim & Leave':'🏃 Abandon Run'}</button>
+      </div>`;
+    return;
+  }
+
+  // ── NODE: FIGHT / ELITE / BOSS ──
+  if(D.state==='node_fight'){
+    const node=D.map.nodes[D.currentNode];
+    const info=NODE_TYPE_INFO[node.type];
+    const enemies=node.enemies||[];
+    const pStr=rs.str+(D.buffStats.str||0), pDex=rs.dex+(D.buffStats.dex||0), pWis=rs.wis+(D.buffStats.wis||0);
+    const enemyCards=enemies.map(e=>`<div class="delve-enemy"><div class="delve-enemy-icon">${e.icon}</div><div class="delve-enemy-name">${e.name}</div><div class="delve-enemy-stats">STR ${e.str} DEX ${e.dex} WIS ${e.wis}</div></div>`).join('');
     el.innerHTML=`
       <div class="delve-card">
-        <div class="delve-floor-bar">${dots}</div>
-        <div style="font-weight:800;color:var(--accent2);margin-bottom:4px">Floor ${D.floor}</div>
-        <div style="font-size:.72rem;color:var(--muted);margin-bottom:12px">⚔️ ${pStr} &nbsp; 🏹 ${pDex} &nbsp; 🧠 ${pWis}</div>
-        ${buffHtml}
-        ${debuffHtml}
-        <div class="delve-enemies">${enemyCards}</div>
-        ${potHtml}
-        <button class="btn btn-p" style="width:100%;padding:12px;font-size:.95rem;margin-top:6px" onclick="fightFloor()">⚔️ Fight Floor ${D.floor}</button>
+        <div style="font-size:1.8rem;margin-bottom:4px">${info.icon}</div>
+        <div style="font-weight:800;color:${info.color};margin-bottom:4px">${info.label}</div>
+        ${_delveHpBar(D)}
+        <div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">Your stats: ⚔️ ${pStr} &nbsp;🏹 ${pDex} &nbsp;🧠 ${pWis}</div>
+        ${_delveBuffChips(D)}
+        <div class="delve-enemies" style="margin-bottom:14px">${enemyCards}</div>
+        ${_delvePotHtml(D)}
+        <button class="btn btn-p" style="width:100%;padding:12px;font-size:.95rem;margin-top:10px" onclick="fightMapNode()">⚔️ Fight!</button>
       </div>`;
     return;
   }
 
   // ── RESULT ──
   if(D.state==='result'){
-    const r=D.lastResult;
-    const won=r&&r.win;
-    const enemies=r?r.enemies:[];
-    const enemyNames=enemies.map(e=>e.icon+' '+e.name).join(', ');
-    const resultColor=won?'var(--green)':'#ef4444';
-    const combatHtml=r?`
-      <div class="delve-result-bar">
-        <div style="font-weight:700;color:${resultColor};margin-bottom:6px">${won?'⚔️ Victory!':'💀 Defeated'} ${r.phylactery?'<span style="color:#a855f7;font-size:.75rem">(Phylactery used)</span>':''}</div>
-        <div class="delve-result-row"><span>Enemies</span><span>${enemyNames}</span></div>
-        <div class="delve-result-row"><span>Your hits / misses</span><span>${r.phits} / ${r.pmisses}</span></div>
-        <div class="delve-result-row"><span>Crits</span><span style="color:#f59e0b">${r.pcrits}</span></div>
-        <div class="delve-result-row"><span>Enemy hits / misses</span><span>${r.ehits} / ${r.emisses}</span></div>
-        ${r.win?`<div class="delve-result-row"><span>HP remaining</span><span style="color:${r.pHp>r.pHpMax*0.33?'#10b981':r.pHp>0?'#f59e0b':'#ef4444'}">${r.pHp} / ${r.pHpMax}</span></div>`:''}
-      </div>`:'';
-    const lootHtml=D.lastLoot
-      ?`<div style="margin-bottom:8px;padding:8px 12px;background:var(--bg);border:1px solid ${RCOL[D.lastLoot.rarity]};border-radius:9px;font-size:.82rem">🎁 <span style="color:${RCOL[D.lastLoot.rarity]};font-weight:700">${D.lastLoot.name}</span> dropped into the pot!</div>`
-      :`<div style="margin-bottom:8px;font-size:.78rem;color:var(--muted)">No loot this floor.</div>`;
-    const rewardHtml=D.lastBuff
-      ?`<div class="delve-buffs"><span class="delve-buff-chip">✨ ${D.lastBuff.name}: ${D.lastBuff.desc}</span></div>`
-      :D.nextDebuff
-        ?`<div style="margin-top:8px"><span class="delve-debuff-chip">${D.nextDebuff.icon} ${D.nextDebuff.name} — ${D.nextDebuff.desc} <span style="font-size:.7rem;opacity:.75">(hits floor ${D.floor+1})</span></span></div>`
-        :'';
+    const r=D.lastResult, won=r&&r.win;
+    const enemyNames=(r&&r.enemies||[]).map(e=>e.icon+' '+e.name).join(', ');
+    const rc=won?'var(--green)':'#ef4444';
     el.innerHTML=`
       <div class="delve-card">
-        <div class="delve-floor-bar">${dots}</div>
-        <div style="font-weight:800;color:var(--accent2);margin-bottom:10px">Floor ${D.floor} Complete</div>
-        ${combatHtml}
-        ${lootHtml}
-        ${rewardHtml}
-        ${potHtml}
-        <div style="display:flex;gap:10px;margin-top:12px">
-          <button class="btn btn-ghost" style="flex:1" onclick="claimAndLeave()">${D.pot.length?`🏃 Claim & Leave`:'🏃 Leave'}</button>
-          <button class="btn btn-p" style="flex:1" onclick="proceedFloor()">⬇️ Floor ${D.floor+1}</button>
+        <div class="delve-result-bar" style="margin-bottom:10px">
+          <div style="font-weight:700;color:${rc};margin-bottom:6px">${won?'⚔️ Victory!':'💀 Defeated'} ${r&&r.phylactery?'<span style="color:#a855f7;font-size:.75rem">(Phylactery used)</span>':''}</div>
+          <div class="delve-result-row"><span>Enemies</span><span>${enemyNames}</span></div>
+          <div class="delve-result-row"><span>Your hits / misses</span><span>${r?r.phits:0} / ${r?r.pmisses:0}</span></div>
+          <div class="delve-result-row"><span>Crits</span><span style="color:#f59e0b">${r?r.pcrits:0}</span></div>
+          <div class="delve-result-row"><span>Enemy hits / misses</span><span>${r?r.ehits:0} / ${r?r.emisses:0}</span></div>
+          ${won?`<div class="delve-result-row"><span>HP remaining</span><span style="color:${D.runHp>D.runHpMax*0.33?'#10b981':D.runHp>0?'#f59e0b':'#ef4444'}">${D.runHp} / ${D.runHpMax}</span></div>`:''}
         </div>
+        ${r&&r.loot?`<div style="margin-bottom:8px;padding:8px 12px;background:var(--bg);border:1px solid ${RCOL[r.loot.rarity]};border-radius:9px;font-size:.82rem">🎁 <span style="color:${RCOL[r.loot.rarity]};font-weight:700">${r.loot.name}</span> dropped into the pot!</div>`:`<div style="margin-bottom:8px;font-size:.78rem;color:var(--muted)">No loot this room.</div>`}
+        ${_delvePotHtml(D)}
+        <button class="btn btn-p" style="width:100%;margin-top:12px" onclick="completeMapNode()">🗺️ Back to Map</button>
+      </div>`;
+    return;
+  }
+
+  // ── NODE: MERCHANT ──
+  if(D.state==='node_merchant'){
+    const node=D.map.nodes[D.currentNode];
+    const stock=node.shopStock||[];
+    const itemsHtml=stock.map((item,i)=>`
+      <div class="dmap-merchant-item">
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:.85rem">${item.label}</div>
+          <div style="font-size:.72rem;color:var(--muted)">${item.desc}</div>
+        </div>
+        <button class="btn btn-g btn-sm" ${S.gold<item.cost?'disabled':''} onclick="merchantBuy(${i})">💰 ${item.cost}g</button>
+      </div>`).join('');
+    el.innerHTML=`
+      <div class="delve-card" style="text-align:left">
+        <div style="font-size:1.8rem;margin-bottom:4px;text-align:center">🏪</div>
+        <div style="font-weight:800;color:#92400e;margin-bottom:8px;text-align:center">Travelling Merchant</div>
+        ${_delveHpBar(D)}
+        <div style="font-size:.75rem;color:var(--muted);margin-bottom:10px">Your gold: <strong style="color:var(--gold)">${S.gold}g</strong></div>
+        ${itemsHtml||'<div style="color:var(--muted);font-size:.83rem">Sold out.</div>'}
+        ${_delvePotHtml(D)}
+        <button class="btn btn-ghost" style="width:100%;margin-top:12px" onclick="merchantLeave()">Leave Shop</button>
+      </div>`;
+    return;
+  }
+
+  // ── NODE: CAMPFIRE ──
+  if(D.state==='node_campfire'){
+    const healAmt=Math.round((D.runHpMax||0)*0.45);
+    const trainCost=Math.round((D.runHpMax||0)*0.15);
+    const canTrain=D.runHp>trainCost+1;
+    el.innerHTML=`
+      <div class="delve-card">
+        <div style="font-size:2rem;margin-bottom:4px">🔥</div>
+        <div style="font-weight:800;color:#b45309;margin-bottom:10px">Campfire</div>
+        ${_delveHpBar(D)}
+        <button class="btn btn-p" style="width:100%;margin-bottom:8px" onclick="campfireRest()">💤 Rest — restore ~${healAmt} HP</button>
+        <button class="btn ${canTrain?'btn-ghost':'btn-ghost'}" style="width:100%;margin-bottom:8px;${!canTrain?'opacity:.4;cursor:not-allowed':''}" ${!canTrain?'disabled':''} onclick="campfireTrain()">⚔️ Train — −${trainCost} HP, +20 STR</button>
+        <button class="btn btn-ghost" style="width:100%;font-size:.78rem" onclick="campfireLeave()">Press on without resting</button>
+        ${_delvePotHtml(D)}
+      </div>`;
+    return;
+  }
+
+  // ── NODE: EVENT ──
+  if(D.state==='node_event'){
+    const node=D.map.nodes[D.currentNode];
+    const ev=node.event;
+    const choicesHtml=ev.choices.map((c,i)=>`
+      <button class="dmap-event-choice" onclick="resolveEventChoice(${i})">
+        <div style="font-weight:600">${c.label}</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:2px">${c.sub}</div>
+      </button>`).join('');
+    el.innerHTML=`
+      <div class="delve-card" style="text-align:left">
+        <div style="font-size:1.8rem;margin-bottom:4px;text-align:center">${ev.icon}</div>
+        <div style="font-weight:800;font-size:1rem;margin-bottom:4px;text-align:center">${ev.title}</div>
+        <div style="font-size:.82rem;color:var(--muted);margin-bottom:14px;text-align:center">${ev.desc}</div>
+        ${_delveHpBar(D)}
+        ${choicesHtml}
+        ${_delvePotHtml(D)}
       </div>`;
     return;
   }
 }
 
-function D_reset(){ S.delve.state='idle'; save(); renderDelve(); }
+function D_reset(){ const D=S.delve; D.state='idle'; D.map=null; D.currentNode=null; D.visitedNodes=[]; D.pot=[]; save(); renderDelve(); }
 
 // ═══════════════════════ AUDIO ════════════════════════════════════════
 function _ac(){ return new (window.AudioContext||window.webkitAudioContext)(); }
